@@ -17,7 +17,7 @@ Dokumentasi ini membantu developer memahami cara kerja API, endpoint utama, meka
 - Dokumentasi API Swagger
 
 ## 🌍 Link Dokumentasi Swagger
-https://annn214.github.io/Movieku/docs/swagger-dark.html
+https://annn214.github.io/Movieku/swagger.html
 
 ## 🔐 Autentikasi API (JWT)
 

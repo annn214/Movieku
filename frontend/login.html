@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Movieku</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="movieku-api-base" content="" />
+  <meta name="google-client-id" content="72583960710-oo4dmi2263qf0nmqo6ga21h5ec5qe4j3.apps.googleusercontent.com" />
+</head>
+<body>  
+  <header>
+    <h1>Login <span>Movieku</span></h1>
+    <nav class="top-nav">
+      <a class="active" href="/login">Login</a>
+      <a href="/register">Registrasi</a>
+      <a href="/">Beranda</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <h2>Masuk</h2>
+      <p class="lead">Masukkan email dan password untuk mendapatkan token Bearer.</p>
+       <form id="login-form">
+        <div>
+          <label>Email</label>
+          <input type="email" name="email" required />
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" name="password" required />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      <p id="login-status" class="status">Menunggu aksi...</p>
+      <div class="divider">atau</div>
+      <div id="google-section">
+        <p class="lead">Masuk lebih cepat dengan akun Google.</p>
+        <div id="google-button"></div>
+        <p id="google-status" class="status">Menunggu login Google...</p>
+
+      </div>
+      <div class="footer-links">Belum punya akun? <a href="/register">Registrasi</a></div>
+    </section>
+
+     <section class="section grid-two">
+      <div>
+        <h2>Token Saat Ini</h2>
+        <p id="token-view" class="status">Memeriksa token...</p>
+        <div class="grid-two">
+          <button id="clear-token" class="secondary">Hapus Token</button>
+          <a class="button-link" href="/search">Menuju Dashboard</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script type="module">
+  import { fetchJSON, setToken, getToken, clearToken, statusSuccess, statusError, statusInfo } from './common.js';
+
+  const form = document.getElementById('login-form');
+  const statusEl = document.getElementById('login-status');
+  const tokenView = document.getElementById('token-view');
+  const googleStatus = document.getElementById('google-status');
+
+  const refreshTokenView = () => {
+    const token = getToken();
+    if (token) {
+      statusSuccess(tokenView, 'Token tersedia dan siap dipakai di halaman lain.');
+    } else {
+      statusInfo(tokenView, 'Belum ada token tersimpan.');
+    }
+  };
+
+  refreshTokenView();
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusInfo(statusEl, 'Mengirim permintaan...');
+    const payload = Object.fromEntries(new FormData(form).entries());
+    try {
+      const data = await fetchJSON('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      setToken(data.token?.token || data.token);
+      statusSuccess(statusEl, 'Login berhasil! Token disimpan.');
+      refreshTokenView();
+    } catch (err) {
+      statusError(statusEl, err.message);
+    }
+  });
+
+  document.getElementById('clear-token').addEventListener('click', () => {
+    clearToken();
+    refreshTokenView();
+    statusInfo(statusEl, 'Token dihapus.');
+  });
+
+  const googleClientId = document.querySelector('meta[name="google-client-id"]')?.content?.trim();
+
+  const initGoogleSignIn = () => {
+    if (!googleClientId) {
+      statusError(googleStatus, 'GOOGLE_CLIENT_ID belum diisi di meta tag.');
+      return;
+    }
+    if (!window.google?.accounts?.id) {
+      statusInfo(googleStatus, 'Memuat Google Identity...');
+      return;
+    }
+
+    // ⭐ GSI setup yang BENAR
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: async (credentialResponse) => {
+        statusInfo(googleStatus, 'Memverifikasi akun Google...');
+        try {
+          const data = await fetchJSON('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: credentialResponse.credential }),
+          });
+          setToken(data.token?.token || data.token);
+          statusSuccess(googleStatus, 'Login Google berhasil! Token disimpan.');
+          refreshTokenView();
+        } catch (err) {
+          statusError(googleStatus, err.message);
+        }
+      },
+
+      // ⭐ Tambahan penting agar GSI tidak fallback ke OAuth redirect
+      ux_mode: "popup",        // WAJIB untuk mencegah error Authorization
+      auto_select: false,      // Jangan pilih akun otomatis
+      cancel_on_tap_outside: false
+    });
+
+    // Tampilkan tombol Google
+    window.google.accounts.id.renderButton(
+      document.getElementById('google-button'),
+      {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        shape: 'pill',
+        text: 'continue_with',
+      }
+    );
+  };
+
+  window.addEventListener('load', () => {
+    initGoogleSignIn();
+
+    // Retry 8 detik bila script GSI belum siap
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        initGoogleSignIn();
+        clearInterval(interval);
+      }
+    }, 800);
+    setTimeout(() => clearInterval(interval), 8000);
+  });
+</script>
+</body>
+</html>

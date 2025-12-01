@@ -14,7 +14,7 @@ Dokumentasi ini membantu developer memahami cara kerja API, endpoint utama, meka
 - User Authentication (JWT Token)
 - CRUD Movie (Create, Read, Update, Delete)
 - Integrasi API Eksternal TMDb (search, detail, trending)
-- Dokumentasi API Swagger (Light & Dark Mode)
+- Dokumentasi API Swagger
 
 ## 🌍 Link Dokumentasi Swagger
 https://annn214.github.io/Movieku/docs/swagger-dark.html

@@ -1,0 +1,250 @@
+openapi: 3.0.3
+info:
+  title: Movieku API
+  description: >
+    API untuk aplikasi Movieku yang menyediakan fitur registrasi, login,
+    CRUD film, pencarian film, dan integrasi TMDb.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3333/api
+    description: Local Development
+
+tags:
+  - name: Auth
+    description: Registrasi dan Login User
+  - name: Movies
+    description: CRUD Film
+  - name: TMDb
+    description: Integrasi API eksternal TMDb
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        year:
+          type: integer
+        genre:
+          type: array
+          items:
+            type: string
+        synopsis:
+          type: string
+        rating:
+          type: number
+        createdBy:
+          type: string
+
+    MovieInput:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        year:
+          type: integer
+        genre:
+          type: array
+          items:
+            type: string
+        synopsis:
+          type: string
+        rating:
+          type: number
+
+    RegisterInput:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+
+    LoginInput:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+paths:
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrasi pengguna baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        201:
+          description: Registrasi berhasil
+        400:
+          description: Input tidak valid
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login dan mendapatkan token Bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        200:
+          description: Login berhasil
+        401:
+          description: Email atau password salah
+
+  /movies:
+    get:
+      tags: [Movies]
+      summary: Ambil daftar film dengan filter dan pagination
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Keyword pencarian
+          schema:
+            type: string
+        - name: genre
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Daftar film
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Movie"
+                  tmdb_suggestions:
+                    type: array
+                    items:
+                      type: object
+
+    post:
+      tags: [Movies]
+      summary: Tambah film baru
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieInput"
+      responses:
+        201:
+          description: Film berhasil ditambahkan
+        400:
+          description: Input tidak valid
+
+  /movies/{id}:
+    get:
+      tags: [Movies]
+      summary: Ambil detail sebuah film
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Detail film lengkap + data TMDb
+        404:
+          description: Film tidak ditemukan
+
+    put:
+      tags: [Movies]
+      summary: Update film (hanya film milik user)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovieInput"
+      responses:
+        200:
+          description: Film berhasil diupdate
+        404:
+          description: Tidak ditemukan atau tidak memiliki izin
+
+    delete:
+      tags: [Movies]
+      summary: Hapus film (hanya milik user)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Film berhasil dihapus
+        404:
+          description: Film tidak ditemukan atau unauthorized
+
+  /movies/tmdb/trending:
+    get:
+      tags: [TMDb]
+      summary: Ambil daftar film trending dari TMDb
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Trending movies

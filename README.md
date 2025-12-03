@@ -28,9 +28,8 @@ Movieku adalah aplikasi **pengelolaan data film** yang menyediakan fitur CRUD, p
   - Pagination (page & limit)
 
 - 🌐 **Integrasi API Eksternal (TMDb)**
-  - Rekomendasi film berdasar pencarian
-  - Detail film TMDb
-  - Film trending mingguan
+  - TMDb : Rekomendasi film berdasar pencarian, Detail film TMDb, Film trending mingguan
+  - Google Auth API
 
 - 🧭 **Swagger API Documentation**
   - Dokumentasi API otomatis  

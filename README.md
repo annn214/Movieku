@@ -131,10 +131,29 @@ git clone https://github.com/annn214/Movieku.git
 npm install
 ```
 
+### - Install Mongoose
+
+```bash
+npm install mongoose
+```
+
+### - Install Jsonwebtoken
+
+```bash
+npm install jsonwebtoken
+```
+
+### - Install Bcryptjs
+
+```bash
+npm install bcryptjs
+```
+
 ### - Jalankan Server
 
 ```bash
 node ace serve --watch
+npm run dev
 ```
 ---
 

@@ -1,134 +1,444 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edit Film - Movieku</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-</head>
-<body>
-  <header>
-    <h1>Edit <span>Film</span></h1>
-    <nav class="top-nav">
-      <a href="/">Beranda</a>
-      <a href="/search">Cari</a>
-      <a href="/create">Tambah</a>
-      <a class="active" href="/edit">Edit</a>
-      <a href="/delete">Hapus</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="section">
-      <h2>Muat Film</h2>
-      <p class="lead">Masukkan ID film untuk memuat data sebelum diubah.</p>
-      <form id="load-form">
-        <label>ID Film</label>
-        <input type="text" name="id" required />
-        <button type="submit" class="secondary">Muat</button>
-      </form>
-      <p id="load-status" class="status">Belum ada data dimuat.</p>
-    </section>
-
-    <section class="section">
-      <h2>Form Edit</h2>
-      <form id="edit-form">
-        <input type="hidden" name="id" />
-        <label>Judul</label>
-        <input type="text" name="title" required />
-        <label>Tahun</label>
-        <input type="number" name="year" />
-        <label>Genre</label>
-        <input type="text" name="genre" />
-        <label>Synopsis</label>
-        <textarea name="synopsis" rows="3"></textarea>
-        <label>Rating (0-10)</label>
-        <input type="number" step="0.1" min="0" max="10" name="rating" />
-        <button type="submit">Simpan Perubahan</button>
-      </form>
-      <p id="edit-status" class="status">Menunggu data dimuat...</p>
-      <div id="edit-preview"></div>
-    </section>
-  </main>
-
-  <script type="module">
-    import { fetchJSON, authHeaders, ensureAuth, renderMovieDetail, statusInfo, statusError, statusSuccess } from './common.js';
-
-    const loadForm = document.getElementById('load-form');
-    const editForm = document.getElementById('edit-form');
-    const loadStatus = document.getElementById('load-status');
-    const editStatus = document.getElementById('edit-status');
-    const preview = document.getElementById('edit-preview');
-
-    const toggleForms = (enabled) => {
-      [...loadForm.elements].forEach((el) => (el.disabled = !enabled));
-      [...editForm.elements].forEach((el) => (el.disabled = !enabled));
-    };
-
-    const ensureAccess = (el) => {
-      const allowed = ensureAuth(el);
-      toggleForms(allowed);
-      if (!allowed) {
-        renderMovieDetail(preview, null);
-        statusInfo(editStatus, 'Login diperlukan untuk mengubah data.');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Edit dan perbarui data film di Movieku" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Edit Film - Movieku</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+    <style>
+      .edit-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
       }
-      return allowed;
-    };
-
-    ensureAccess(loadStatus);
-
-    function fillForm(movie) {
-      editForm.elements['id'].value = movie._id || movie.id;
-      editForm.elements['title'].value = movie.title || '';
-      editForm.elements['year'].value = movie.year || '';
-      editForm.elements['genre'].value = Array.isArray(movie.genre) ? movie.genre.join(', ') : movie.genre || '';
-      editForm.elements['synopsis'].value = movie.synopsis || '';
-      editForm.elements['rating'].value = movie.rating ?? '';
-    }
-
-    loadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!ensureAccess(loadStatus)) return;
-      const id = new FormData(loadForm).get('id');
-      statusInfo(loadStatus, 'Memuat data film...');
-      try {
-        const data = await fetchJSON(`/movies/${id}`, { headers: authHeaders() });
-        fillForm(data);
-        renderMovieDetail(preview, data);
-        statusSuccess(loadStatus, 'Data ditemukan, silakan edit.');
-      } catch (err) {
-        statusError(loadStatus, err.message);
+      @media (max-width: 900px) {
+        .edit-layout {
+          grid-template-columns: 1fr;
+        }
       }
-    });
-
-    editForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!ensureAccess(editStatus)) return;
-      const formData = Object.fromEntries(new FormData(editForm).entries());
-      const id = formData.id;
-      const payload = {
-        ...formData,
-        genre: formData.genre ? formData.genre.split(',').map((g) => g.trim()).filter(Boolean) : [],
-      };
-      if (payload.year) payload.year = Number(payload.year);
-      if (payload.rating) payload.rating = Number(payload.rating);
-      delete payload.id;
-      statusInfo(editStatus, 'Menyimpan perubahan...');
-      try {
-        const data = await fetchJSON(`/movies/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', ...authHeaders() },
-          body: JSON.stringify(payload),
-        });
-        renderMovieDetail(preview, data);
-        statusSuccess(editStatus, 'Perubahan tersimpan.');
-      } catch (err) {
-        statusError(editStatus, err.message);
+      .load-section {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(0, 212, 255, 0.05));
       }
-    });
+      .input-group {
+        position: relative;
+      }
+      .input-group i.field-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+      .input-group input {
+        padding-left: 48px;
+      }
+      .input-group:focus-within i.field-icon {
+        color: var(--accent-primary);
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 600px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .rating-input {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .rating-display {
+        background: rgba(0, 212, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        color: var(--accent-primary);
+        min-width: 60px;
+        text-align: center;
+      }
+      input[type='range'] {
+        -webkit-appearance: none;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-full);
+        height: 8px;
+        flex: 1;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .preview-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        min-height: 200px;
+      }
+      .preview-card.empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+      }
+      .preview-card.empty i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      button i {
+        margin-right: 8px;
+      }
+      label i {
+        margin-right: 6px;
+        opacity: 0.7;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
+      <h1>Edit <span>Film</span></h1>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/"><i class="fas fa-home" aria-hidden="true"></i> Beranda</a>
+        <a href="/search"><i class="fas fa-search" aria-hidden="true"></i> Cari</a>
+        <a href="/create"><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a>
+        <a class="active" href="/edit" aria-current="page"
+          ><i class="fas fa-edit" aria-hidden="true"></i> Edit</a
+        >
+        <a href="/delete"><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a>
+      </nav>
+    </header>
 
-    renderMovieDetail(preview, null);
-  </script>
-</body>
+    <main id="main-content" role="main" style="display: block; max-width: 1200px">
+      <div class="edit-layout">
+        <section class="section load-section" aria-labelledby="load-title">
+          <h2 id="load-title"><i class="fas fa-download" aria-hidden="true"></i> Muat Data Film</h2>
+          <p class="lead">Masukkan ID film untuk memuat data yang akan diedit.</p>
+          <form id="load-form" aria-describedby="load-status" novalidate>
+            <div>
+              <label for="load-id"
+                ><i class="fas fa-fingerprint" aria-hidden="true"></i> ID Film</label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  name="id"
+                  id="load-id"
+                  placeholder="Masukkan ObjectId"
+                  required
+                  aria-required="true"
+                />
+                <i class="fas fa-fingerprint field-icon" aria-hidden="true"></i>
+              </div>
+            </div>
+            <button type="submit" class="secondary">
+              <i class="fas fa-cloud-download-alt" aria-hidden="true"></i> Muat Data
+            </button>
+          </form>
+          <div id="load-status" class="status" role="status" aria-live="polite">
+            <i class="fas fa-info-circle" aria-hidden="true"></i> Belum ada data dimuat
+          </div>
+
+          <h3 style="margin-top: 24px; font-size: 16px">
+            <i class="fas fa-eye" aria-hidden="true"></i> Preview
+          </h3>
+          <div
+            id="edit-preview"
+            class="preview-card empty"
+            role="region"
+            aria-label="Preview film"
+            aria-live="polite"
+          >
+            <i class="fas fa-film" aria-hidden="true"></i>
+            <span>Data film akan tampil di sini</span>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="edit-title">
+          <h2 id="edit-title"><i class="fas fa-edit" aria-hidden="true"></i> Form Edit</h2>
+          <p class="lead">Ubah data sesuai kebutuhan lalu simpan.</p>
+          <form id="edit-form" aria-describedby="edit-status" novalidate>
+            <input type="hidden" name="id" />
+            <div>
+              <label for="edit-title-input"
+                ><i class="fas fa-film" aria-hidden="true"></i> Judul Film</label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  name="title"
+                  id="edit-title-input"
+                  placeholder="Judul film"
+                  required
+                  aria-required="true"
+                />
+                <i class="fas fa-film field-icon" aria-hidden="true"></i>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div>
+                <label for="edit-year"
+                  ><i class="fas fa-calendar" aria-hidden="true"></i> Tahun</label
+                >
+                <div class="input-group">
+                  <input
+                    type="number"
+                    name="year"
+                    id="edit-year"
+                    placeholder="2024"
+                    inputmode="numeric"
+                  />
+                  <i class="fas fa-calendar field-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+              <div>
+                <label for="edit-genre"><i class="fas fa-tags" aria-hidden="true"></i> Genre</label>
+                <div class="input-group">
+                  <input type="text" name="genre" id="edit-genre" placeholder="action, drama" />
+                  <i class="fas fa-tags field-icon" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label for="edit-synopsis"
+                ><i class="fas fa-align-left" aria-hidden="true"></i> Synopsis</label
+              >
+              <textarea
+                name="synopsis"
+                id="edit-synopsis"
+                rows="4"
+                placeholder="Deskripsi film..."
+              ></textarea>
+            </div>
+
+            <div>
+              <label for="rating-slider"
+                ><i class="fas fa-star" aria-hidden="true"></i> Rating</label
+              >
+              <div class="rating-input">
+                <input
+                  type="range"
+                  id="rating-slider"
+                  name="rating-range"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value="0"
+                  aria-describedby="rating-display"
+                />
+                <output class="rating-display" id="rating-display" for="rating-slider"
+                  >⭐ 0.0</output
+                >
+                <input type="hidden" name="rating" id="rating-value" value="0" />
+              </div>
+            </div>
+
+            <button type="submit">
+              <i class="fas fa-save" aria-hidden="true"></i> Simpan Perubahan
+            </button>
+          </form>
+          <div id="edit-status" class="status" role="status" aria-live="polite">
+            <i class="fas fa-info-circle" aria-hidden="true"></i> Muat data terlebih dahulu
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module">
+      import {
+        fetchJSON,
+        authHeaders,
+        ensureAuth,
+        renderMovieDetail,
+        statusInfo,
+        statusError,
+        statusSuccess,
+      } from './common.js'
+
+      const loadForm = document.getElementById('load-form')
+      const editForm = document.getElementById('edit-form')
+      const loadStatus = document.getElementById('load-status')
+      const editStatus = document.getElementById('edit-status')
+      const preview = document.getElementById('edit-preview')
+      const ratingSlider = document.getElementById('rating-slider')
+      const ratingDisplay = document.getElementById('rating-display')
+      const ratingValue = document.getElementById('rating-value')
+
+      ratingSlider.addEventListener('input', () => {
+        const val = parseFloat(ratingSlider.value).toFixed(1)
+        ratingDisplay.textContent = `⭐ ${val}`
+        ratingValue.value = val
+      })
+
+      const toggleForms = (enabled) => {
+        ;[...loadForm.elements].forEach((el) => (el.disabled = !enabled))
+        ;[...editForm.elements].forEach((el) => (el.disabled = !enabled))
+      }
+
+      const ensureAccess = (el) => {
+        const allowed = ensureAuth(el)
+        toggleForms(allowed)
+        if (!allowed) {
+          preview.innerHTML =
+            '<i class="fas fa-lock" style="font-size:48px;margin-bottom:16px;opacity:0.5;"></i><span>Login diperlukan</span>'
+          preview.className = 'preview-card empty'
+          statusInfo(editStatus, '<i class="fas fa-lock"></i> Login diperlukan')
+        }
+        return allowed
+      }
+
+      ensureAccess(loadStatus)
+
+      function fillForm(movie) {
+        editForm.elements['id'].value = movie._id || movie.id
+        editForm.elements['title'].value = movie.title || ''
+        editForm.elements['year'].value = movie.year || ''
+        editForm.elements['genre'].value = Array.isArray(movie.genre)
+          ? movie.genre.join(', ')
+          : movie.genre || ''
+        editForm.elements['synopsis'].value = movie.synopsis || ''
+        const rating = movie.rating ?? 0
+        editForm.elements['rating'].value = rating
+        ratingSlider.value = rating
+        ratingDisplay.textContent = `⭐ ${parseFloat(rating).toFixed(1)}`
+      }
+
+      function updatePreview(movie) {
+        if (!movie) {
+          preview.innerHTML =
+            '<i class="fas fa-film" style="font-size:48px;margin-bottom:16px;opacity:0.5;"></i><span>Data film akan tampil di sini</span>'
+          preview.className = 'preview-card empty'
+          return
+        }
+        preview.className = 'preview-card'
+        const genres = (movie.genre || []).filter(Boolean).join(', ')
+        preview.innerHTML = `
+        <div class="movie-header">
+          <div>
+            <strong style="font-size: 18px;">${movie.title || 'Tanpa judul'}</strong><br />
+            <span class="muted"><i class="fas fa-calendar"></i> ${movie.year || '-'}</span>
+          </div>
+          <span class="badge"><i class="fas fa-star"></i> ${movie.rating ?? '-'}</span>
+        </div>
+        <p style="margin: 12px 0; color: var(--text-secondary);">${movie.synopsis || 'Tidak ada sinopsis'}</p>
+        <div class="chips">
+          ${
+            genres
+              ? genres
+                  .split(', ')
+                  .map((g) => `<span class="badge secondary">${g}</span>`)
+                  .join('')
+              : '<span class="muted">Tidak ada genre</span>'
+          }
+        </div>
+      `
+      }
+
+      loadForm.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (!ensureAccess(loadStatus)) return
+        const id = new FormData(loadForm).get('id')
+        statusInfo(loadStatus, '<i class="fas fa-spinner fa-spin"></i> Memuat data...')
+        try {
+          const data = await fetchJSON(`/movies/${id}`, { headers: authHeaders() })
+          fillForm(data)
+          updatePreview(data)
+          statusSuccess(loadStatus, '<i class="fas fa-check"></i> Data ditemukan, silakan edit')
+        } catch (err) {
+          statusError(loadStatus, '<i class="fas fa-times"></i> ' + err.message)
+        }
+      })
+
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (!ensureAccess(editStatus)) return
+        const formData = Object.fromEntries(new FormData(editForm).entries())
+        const id = formData.id
+        if (!id) {
+          statusError(editStatus, '<i class="fas fa-times"></i> Muat data film terlebih dahulu')
+          return
+        }
+        const payload = {
+          ...formData,
+          genre: formData.genre
+            ? formData.genre
+                .split(',')
+                .map((g) => g.trim())
+                .filter(Boolean)
+            : [],
+        }
+        if (payload.year) payload.year = Number(payload.year)
+        if (payload.rating) payload.rating = Number(payload.rating)
+        delete payload.id
+        statusInfo(editStatus, '<i class="fas fa-spinner fa-spin"></i> Menyimpan perubahan...')
+        try {
+          const data = await fetchJSON(`/movies/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify(payload),
+          })
+          updatePreview(data)
+          statusSuccess(editStatus, '<i class="fas fa-check"></i> Perubahan tersimpan!')
+        } catch (err) {
+          statusError(editStatus, '<i class="fas fa-times"></i> ' + err.message)
+        }
+      })
+
+      updatePreview(null)
+    </script>
+  </body>
 </html>

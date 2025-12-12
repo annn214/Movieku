@@ -1,217 +1,499 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cari Film - Movieku</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-</head>
-<body>
-  <header>
-    <h1>Cari <span>Film</span></h1>
-    <nav class="top-nav">
-      <a href="/">Beranda</a>
-      <a href="/create">Tambah</a>
-      <a href="/edit">Edit</a>
-      <a href="/delete">Hapus</a>
-      <a href="/login">Login</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Cari dan temukan film favorit Anda di Movieku" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Cari Film - Movieku</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+    <style>
+      .search-hero {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.1));
+        border-radius: var(--radius-xl);
+        padding: 32px;
+        margin-bottom: 24px;
+        text-align: center;
+        border: 1px solid var(--glass-border);
+      }
+      .search-hero h2 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .search-hero h2::before {
+        display: none;
+      }
+      .search-box {
+        display: flex;
+        gap: 12px;
+        max-width: 600px;
+        margin: 20px auto 0;
+      }
+      .search-box input {
+        flex: 1;
+        padding: 16px 20px;
+        font-size: 16px;
+      }
+      .search-box button {
+        padding: 16px 28px;
+        white-space: nowrap;
+      }
+      .filters-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 16px;
+      }
+      .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-full);
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+      }
+      .filter-chip:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+      }
+      .filter-chip input {
+        width: 60px;
+        padding: 4px 8px;
+        font-size: 13px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-sm);
+      }
+      .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .results-count {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+      .movie-card-enhanced {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .movie-poster {
+        width: 100px;
+        height: 150px;
+        background: var(--glass-bg);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+      }
+      .movie-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .movie-info h4 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .movie-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .trending-card {
+        min-width: 200px;
+        text-align: center;
+      }
+      .trending-card .movie-poster {
+        width: 100%;
+        height: 250px;
+        margin-bottom: 12px;
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      button i {
+        margin-right: 8px;
+      }
+      label i {
+        margin-right: 6px;
+        opacity: 0.7;
+      }
+      .detail-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .detail-actions button {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
+      <h1>Cari <span>Film</span></h1>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/"><i class="fas fa-home" aria-hidden="true"></i> Beranda</a>
+        <a class="active" href="/search" aria-current="page"
+          ><i class="fas fa-search" aria-hidden="true"></i> Cari Film</a
+        >
+        <a href="/create"><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a>
+        <a href="/edit"><i class="fas fa-edit" aria-hidden="true"></i> Edit</a>
+        <a href="/delete"><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a>
+      </nav>
+    </header>
 
-  <main>
-    <section class="section">
-      <h2>Pencarian</h2>
-      <p class="lead">Cari film di database Movieku dan lihat rekomendasi TMDb.</p>
-      <form id="search-form">
-        <div class="grid-two">
-          <div>
-            <label>Kata kunci</label>
-            <input type="text" name="q" placeholder="Contoh: Inception" required />
+    <main id="main-content" role="main" style="display: block; max-width: 1200px">
+      <section class="search-hero" aria-labelledby="search-hero-title">
+        <h2 id="search-hero-title">
+          <i class="fas fa-search" aria-hidden="true"></i> Temukan Film Favorit
+        </h2>
+        <p class="lead">Cari dari database Movieku atau jelajahi rekomendasi TMDb</p>
+        <form id="search-form" role="search" aria-label="Pencarian film" novalidate>
+          <div class="search-box">
+            <label for="search-query" class="visually-hidden">Kata kunci pencarian</label>
+            <input
+              type="search"
+              name="q"
+              id="search-query"
+              placeholder="Ketik judul film..."
+              required
+              aria-required="true"
+            />
+            <button type="submit"><i class="fas fa-search" aria-hidden="true"></i> Cari</button>
           </div>
-          <div>
-            <label>Genre (opsional, pisahkan koma)</label>
-            <input type="text" name="genre" placeholder="action,drama" />
+          <div class="filters-row" role="group" aria-label="Filter pencarian">
+            <div class="filter-chip">
+              <label for="filter-genre"><i class="fas fa-tags" aria-hidden="true"></i></label>
+              <input type="text" name="genre" id="filter-genre" placeholder="Genre" />
+            </div>
+            <div class="filter-chip">
+              <label for="filter-page"
+                ><i class="fas fa-layer-group" aria-hidden="true"></i> Page:</label
+              >
+              <input
+                type="number"
+                name="page"
+                id="filter-page"
+                value="1"
+                min="1"
+                inputmode="numeric"
+              />
+            </div>
+            <div class="filter-chip">
+              <label for="filter-limit"
+                ><i class="fas fa-list-ol" aria-hidden="true"></i> Limit:</label
+              >
+              <input
+                type="number"
+                name="limit"
+                id="filter-limit"
+                value="5"
+                min="1"
+                max="50"
+                inputmode="numeric"
+              />
+            </div>
           </div>
-        </div>
-        <div class="grid-two">
-          <div>
-            <label>Halaman</label>
-            <input type="number" name="page" value="1" min="1" />
-          </div>
-          <div>
-            <label>Limit</label>
-            <input type="number" name="limit" value="5" min="1" max="50" />
-          </div>
-        </div>
-        <button type="submit">Cari Film</button>
-      </form>
-      <p id="search-status" class="status">Menunggu pencarian...</p>
-      <div class="movies-grid" id="search-results"></div>
-    </section>
+        </form>
+      </section>
 
-    <section class="section">
-      <h2>Detail Film</h2>
-      <p class="lead">Klik "Lihat detail" atau masukkan ID manual.</p>
-      <form id="detail-form">
-        <label>ID Film</label>
-        <input type="text" name="id" placeholder="ID ObjectId" required />
-        <button type="submit" class="secondary">Muat Detail</button>
-      </form>
-      <p id="detail-status" class="status">Belum ada detail.</p>
-      <div id="detail-container"></div>
-    </section>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+          gap: 24px;
+        "
+      >
+        <section class="section" aria-labelledby="search-results-title">
+          <h2 id="search-results-title">
+            <i class="fas fa-film" aria-hidden="true"></i> Hasil Pencarian
+          </h2>
+          <div id="search-status" class="status" role="status" aria-live="polite">
+            <i class="fas fa-info-circle" aria-hidden="true"></i> Masukkan kata kunci untuk mencari
+          </div>
+          <div
+            class="movies-grid"
+            id="search-results"
+            role="list"
+            aria-label="Daftar hasil pencarian"
+          ></div>
+        </section>
 
-    <section class="section">
-      <h2>Saran TMDb</h2>
-      <p class="lead">Hasil TMDb dari pencarian kata kunci terakhir.</p>
-      <div id="tmdb-suggestions" class="movies-grid"></div>
-    </section>
-
-    <section class="section">
-      <div class="header-row">
-        <div>
-          <h2>Tren TMDb Minggu Ini</h2>
-          <p class="lead">Butuh inspirasi? Muat 10 film terpopuler dari TMDb.</p>
-        </div>
-        <button id="tmdb-refresh" class="secondary">Muat Tren TMDb</button>
+        <section class="section" aria-labelledby="detail-title">
+          <h2 id="detail-title">
+            <i class="fas fa-info-circle" aria-hidden="true"></i> Detail Film
+          </h2>
+          <p class="lead">Klik film atau masukkan ID manual.</p>
+          <form id="detail-form" aria-describedby="detail-status" novalidate>
+            <div class="input-group" style="position: relative">
+              <label for="detail-id" class="visually-hidden">ID Film</label>
+              <input
+                type="text"
+                name="id"
+                id="detail-id"
+                placeholder="Masukkan ID ObjectId"
+                required
+                aria-required="true"
+                style="padding-left: 48px"
+              />
+              <i
+                class="fas fa-fingerprint"
+                aria-hidden="true"
+                style="
+                  position: absolute;
+                  left: 16px;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  color: var(--text-muted);
+                "
+              ></i>
+            </div>
+            <button type="submit" class="secondary">
+              <i class="fas fa-eye" aria-hidden="true"></i> Muat Detail
+            </button>
+          </form>
+          <div id="detail-status" class="status" role="status" aria-live="polite">
+            <i class="fas fa-info-circle" aria-hidden="true"></i> Belum ada detail
+          </div>
+          <div id="detail-container" aria-live="polite"></div>
+        </section>
       </div>
-      <p id="tmdb-status" class="status">Menunggu permintaan...</p>
-      <div id="tmdb-trending" class="movies-grid horizontal-scroll"></div>
-    </section>
-  </main>
 
-  <script type="module">
-    import { fetchJSON, renderMoviesList, renderMovieDetail, statusInfo, statusError, statusSuccess, ensureAuth, authHeaders } from './common.js';
+      <section class="section" style="margin-top: 24px" aria-labelledby="tmdb-suggestions-title">
+        <h2 id="tmdb-suggestions-title">
+          <i class="fas fa-magic" aria-hidden="true"></i> Saran TMDb
+        </h2>
+        <p class="lead">Rekomendasi berdasarkan pencarian terakhir.</p>
+        <div
+          id="tmdb-suggestions"
+          class="movies-grid horizontal-scroll"
+          role="list"
+          aria-label="Saran film dari TMDb"
+        ></div>
+      </section>
 
-    const searchForm = document.getElementById('search-form');
-    const resultsEl = document.getElementById('search-results');
-    const searchStatus = document.getElementById('search-status');
-    const detailForm = document.getElementById('detail-form');
-    const detailStatus = document.getElementById('detail-status');
-    const detailContainer = document.getElementById('detail-container');
-    const tmdbEl = document.getElementById('tmdb-suggestions');
-    const tmdbTrendingEl = document.getElementById('tmdb-trending');
-    const tmdbStatus = document.getElementById('tmdb-status');
-    const tmdbRefresh = document.getElementById('tmdb-refresh');
+      <section class="section" style="margin-top: 24px" aria-labelledby="trending-title">
+        <div class="header-row">
+          <div>
+            <h2 id="trending-title">
+              <i class="fas fa-fire" aria-hidden="true"></i> Trending Minggu Ini
+            </h2>
+            <p class="lead">Film paling populer dari TMDb saat ini.</p>
+          </div>
+          <button
+            id="tmdb-refresh"
+            class="secondary"
+            type="button"
+            aria-label="Refresh daftar trending"
+          >
+            <i class="fas fa-sync-alt" aria-hidden="true"></i> Refresh
+          </button>
+        </div>
+        <div id="tmdb-status" class="status" role="status" aria-live="polite">
+          <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Memuat trending...
+        </div>
+        <div
+          id="tmdb-trending"
+          class="movies-grid horizontal-scroll"
+          role="list"
+          aria-label="Film trending"
+        ></div>
+      </section>
+    </main>
 
-    const renderTmdb = (items = []) => {
-      if (!items.length) {
-        tmdbEl.innerHTML = '<p class="muted">Belum ada saran.</p>';
-        return;
-      }
-      tmdbEl.innerHTML = items
-        .map(
-          (m) => `
+    <script type="module">
+      import {
+        fetchJSON,
+        renderMoviesList,
+        renderMovieDetail,
+        statusInfo,
+        statusError,
+        statusSuccess,
+        ensureAuth,
+        authHeaders,
+      } from './common.js'
+
+      const searchForm = document.getElementById('search-form')
+      const resultsEl = document.getElementById('search-results')
+      const searchStatus = document.getElementById('search-status')
+      const detailForm = document.getElementById('detail-form')
+      const detailStatus = document.getElementById('detail-status')
+      const detailContainer = document.getElementById('detail-container')
+      const tmdbEl = document.getElementById('tmdb-suggestions')
+      const tmdbTrendingEl = document.getElementById('tmdb-trending')
+      const tmdbStatus = document.getElementById('tmdb-status')
+      const tmdbRefresh = document.getElementById('tmdb-refresh')
+
+      const renderTmdb = (items = []) => {
+        if (!items.length) {
+          tmdbEl.innerHTML =
+            '<p class="muted"><i class="fas fa-info-circle"></i> Belum ada saran.</p>'
+          return
+        }
+        tmdbEl.innerHTML = items
+          .map(
+            (m) => `
           <article class="movie-card">
             <div class="movie-header">
               <div>
                 <strong>${m.title}</strong><br />
-                <span class="muted">${m.releaseDate || '-'}</span>
+                <span class="muted"><i class="fas fa-calendar"></i> ${m.releaseDate || '-'}</span>
               </div>
-              <span class="badge">TMDb #${m.tmdbId}</span>
+              <span class="badge"><i class="fas fa-database"></i> #${m.tmdbId}</span>
             </div>
-            ${m.tmdbPoster ? `<img src="${m.tmdbPoster}" alt="Poster" style="width:120px;border-radius:8px;" />` : ''}
+            ${m.tmdbPoster ? `<img src="${m.tmdbPoster}" alt="Poster" style="width:120px;border-radius:8px;" />` : '<div class="movie-poster"><i class="fas fa-image"></i></div>'}
           </article>
         `
-        )
-        .join('');
-    };
-
-
-
-    const toggleFormState = (enabled) => {
-      [...searchForm.elements].forEach((el) => (el.disabled = !enabled));
-      [...detailForm.elements].forEach((el) => (el.disabled = !enabled));
-      tmdbRefresh.disabled = !enabled;
-    };
-
-    const ensureAccess = () => {
-      const allowed = ensureAuth(searchStatus);
-      toggleFormState(allowed);
-      if (!allowed) {
-        statusInfo(detailStatus, 'Login diperlukan untuk melihat detail film.');
-        statusInfo(tmdbStatus, 'Login diperlukan untuk memuat tren TMDb.');
+          )
+          .join('')
       }
-      return allowed;
-    };
 
-    ensureAccess();
-
-    searchForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!ensureAccess()) return;
-      statusInfo(searchStatus, 'Memuat hasil...');
-      const params = new URLSearchParams(Object.fromEntries(new FormData(searchForm).entries()));
-      try {
-        const data = await fetchJSON(`/movies?${params.toString()}`, { headers: authHeaders() });
-        renderMoviesList(resultsEl, data.data || [], (id) => loadDetail(id));
-        renderTmdb(data.tmdb_suggestions || []);
-        statusInfo(searchStatus, `Menampilkan ${data.data?.length || 0} hasil.`);
-      } catch (err) {
-        statusError(searchStatus, err.message);
+      const toggleFormState = (enabled) => {
+        ;[...searchForm.elements].forEach((el) => (el.disabled = !enabled))
+        ;[...detailForm.elements].forEach((el) => (el.disabled = !enabled))
+        tmdbRefresh.disabled = !enabled
       }
-    });
 
-    async function loadDetail(id) {
-      if (!ensureAccess()) return;
-      statusInfo(detailStatus, 'Memuat detail...');
-      try {
-        const data = await fetchJSON(`/movies/${id}`, { headers: authHeaders() });
-        renderMovieDetail(detailContainer, data);
-        statusInfo(detailStatus, 'Detail dimuat.');
-      } catch (err) {
-        statusError(detailStatus, err.message);
+      const ensureAccess = () => {
+        const allowed = ensureAuth(searchStatus)
+        toggleFormState(allowed)
+        if (!allowed) {
+          statusInfo(detailStatus, '<i class="fas fa-lock"></i> Login diperlukan')
+          statusInfo(tmdbStatus, '<i class="fas fa-lock"></i> Login diperlukan')
+        }
+        return allowed
       }
-    }
 
-    detailForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const id = new FormData(detailForm).get('id');
-      loadDetail(id);
-    });
+      ensureAccess()
 
-    renderMovieDetail(detailContainer, null);
-    renderTmdb();
+      searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (!ensureAccess()) return
+        statusInfo(searchStatus, '<i class="fas fa-spinner fa-spin"></i> Mencari film...')
+        const params = new URLSearchParams(Object.fromEntries(new FormData(searchForm).entries()))
+        try {
+          const data = await fetchJSON(`/movies?${params.toString()}`, { headers: authHeaders() })
+          renderMoviesList(resultsEl, data.data || [], (id) => loadDetail(id))
+          renderTmdb(data.tmdb_suggestions || [])
+          statusSuccess(
+            searchStatus,
+            `<i class="fas fa-check"></i> Ditemukan ${data.data?.length || 0} film`
+          )
+        } catch (err) {
+          statusError(searchStatus, '<i class="fas fa-times"></i> ' + err.message)
+        }
+      })
 
-    const renderTrending = (items = []) => {
-      if (!items.length) {
-        tmdbTrendingEl.innerHTML = '<p class="muted">Tidak ada tren ditemukan.</p>';
-        return;
+      async function loadDetail(id) {
+        if (!ensureAccess()) return
+        statusInfo(detailStatus, '<i class="fas fa-spinner fa-spin"></i> Memuat detail...')
+        try {
+          const data = await fetchJSON(`/movies/${id}`, { headers: authHeaders() })
+          renderMovieDetail(detailContainer, data)
+          statusSuccess(detailStatus, '<i class="fas fa-check"></i> Detail dimuat')
+        } catch (err) {
+          statusError(detailStatus, '<i class="fas fa-times"></i> ' + err.message)
+        }
       }
-      tmdbTrendingEl.innerHTML = items
-        .map(
-          (m) => `
-          <article class="movie-card">
-            <div class="movie-header">
-              <div>
-                <strong>${m.title}</strong><br />
-                <span class="muted">${m.releaseDate || '-'} • ⭐ ${m.tmdbRating ?? '-'}</span>
-              </div>
-              <span class="badge">TMDb #${m.tmdbId}</span>
+
+      detailForm.addEventListener('submit', (e) => {
+        e.preventDefault()
+        const id = new FormData(detailForm).get('id')
+        loadDetail(id)
+      })
+
+      renderMovieDetail(detailContainer, null)
+      renderTmdb()
+
+      const renderTrending = (items = []) => {
+        if (!items.length) {
+          tmdbTrendingEl.innerHTML =
+            '<p class="muted"><i class="fas fa-info-circle"></i> Tidak ada tren ditemukan.</p>'
+          return
+        }
+        tmdbTrendingEl.innerHTML = items
+          .map(
+            (m) => `
+          <article class="movie-card trending-card">
+            ${
+              m.tmdbPoster
+                ? `<div class="movie-poster"><img src="${m.tmdbPoster}" alt="${m.title}" /></div>`
+                : '<div class="movie-poster"><i class="fas fa-film" style="font-size: 40px;"></i></div>'
+            }
+            <strong>${m.title}</strong>
+            <div class="movie-meta" style="justify-content: center; margin-top: 8px;">
+              <span class="badge"><i class="fas fa-star"></i> ${m.tmdbRating ?? '-'}</span>
+              <span class="badge secondary"><i class="fas fa-calendar"></i> ${m.releaseDate || '-'}</span>
             </div>
-            ${m.tmdbPoster ? `<img src="${m.tmdbPoster}" alt="Poster" style="width:120px;border-radius:8px;" />` : ''}
           </article>
         `
-        )
-        .join('');
-    };
-
-    const loadTrending = async () => {
-      if (!ensureAccess()) return;
-      statusInfo(tmdbStatus, 'Mengambil tren TMDb...');
-      try {
-        const data = await fetchJSON('/movies/tmdb/trending', { headers: authHeaders() });
-        renderTrending(data.data || []);
-        statusSuccess(tmdbStatus, `Menampilkan ${data.data?.length || 0} film tren.`);
-      } catch (err) {
-        statusError(tmdbStatus, err.message);
+          )
+          .join('')
       }
-    };
 
-    tmdbRefresh.addEventListener('click', loadTrending);
-    renderTrending();
-    loadTrending();
-  </script>
-</body>
+      const loadTrending = async () => {
+        if (!ensureAccess()) return
+        statusInfo(tmdbStatus, '<i class="fas fa-spinner fa-spin"></i> Mengambil trending...')
+        try {
+          const data = await fetchJSON('/movies/tmdb/trending', { headers: authHeaders() })
+          renderTrending(data.data || [])
+          statusSuccess(
+            tmdbStatus,
+            `<i class="fas fa-check"></i> ${data.data?.length || 0} film trending`
+          )
+        } catch (err) {
+          statusError(tmdbStatus, '<i class="fas fa-times"></i> ' + err.message)
+        }
+      }
+
+      tmdbRefresh.addEventListener('click', loadTrending)
+      renderTrending()
+      loadTrending()
+    </script>
+  </body>
 </html>

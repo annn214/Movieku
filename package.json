@@ -59,6 +59,9 @@
     "@adonisjs/lucid": "^21.6.1",
     "@vinejs/vine": "^3.0.1",
     "axios": "^1.13.2",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.0.0",
     "reflect-metadata": "^0.2.2"
   },
   "hotHook": {

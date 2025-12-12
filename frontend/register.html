@@ -1,75 +1,253 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registrasi - Movieku</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-</head>
-<body>
-  <header>
-    <h1>Registrasi <span>Movieku</span></h1>
-    <nav class="top-nav">
-      <a href="/login">Login</a>
-      <a class="active" href="/register">Registrasi</a>
-      <a href="/">Beranda</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="section">
-      <h2>Buat Akun</h2>
-      <p class="lead">Isi data di bawah untuk membuat akun baru.</p>
-      <form id="register-form">
-        <div>
-          <label>Nama</label>
-          <input type="text" name="name" required />
-        </div>
-        <div>
-          <label>Email</label>
-          <input type="email" name="email" required />
-        </div>
-        <div>
-          <label>Password</label>
-          <input type="password" name="password" required />
-        </div>
-        <button type="submit">Registrasi</button>
-      </form>
-      <p id="register-status" class="status">Menunggu aksi...</p>
-      <div class="footer-links">Sudah punya akun? <a href="/login">Login</a></div>
-    </section>
-
-    <section class="section grid-two">
-      <div>
-        <h2>Tips</h2>
-        <p class="helper">Setelah registrasi berhasil, lanjutkan ke halaman login untuk mendapatkan token.</p>
-      </div>
-    </section>
-  </main>
-
-  <script type="module">
-    import { fetchJSON, statusSuccess, statusError, statusInfo } from './common.js';
-
-    const form = document.getElementById('register-form');
-    const statusEl = document.getElementById('register-status');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      statusInfo(statusEl, 'Mengirim permintaan...');
-      const payload = Object.fromEntries(new FormData(form).entries());
-      try {
-        await fetchJSON('/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        statusSuccess(statusEl, 'Registrasi berhasil! Silakan login.');
-        form.reset();
-      } catch (err) {
-        statusError(statusEl, err.message);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Registrasi akun Movieku - Platform manajemen film modern" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Registrasi - Movieku</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+    <style>
+      .register-box {
+        max-width: 480px;
+        margin: 0 auto;
       }
-    });
-  </script>
-</body>
+      .input-group {
+        position: relative;
+      }
+      .input-group i.field-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        transition: color var(--transition-normal);
+        pointer-events: none;
+      }
+      .input-group input {
+        padding-left: 48px;
+      }
+      .input-group:focus-within i.field-icon {
+        color: var(--accent-primary);
+      }
+      .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+      }
+      .password-toggle:hover {
+        color: var(--accent-primary);
+      }
+      .tips-card {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+      }
+      .tips-card h4 {
+        margin: 0 0 12px;
+        color: var(--accent-primary);
+      }
+      .tips-list {
+        margin: 0;
+      }
+      .tips-list li {
+        border-bottom: none;
+        padding: 8px 0;
+        padding-left: 28px;
+        font-size: 14px;
+      }
+      .tips-list li::before {
+        background: var(--gradient-accent);
+        width: 6px;
+        height: 6px;
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      button i {
+        margin-right: 8px;
+      }
+      label i {
+        margin-right: 6px;
+        opacity: 0.7;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
+      <h1>Registrasi <span>Movieku</span></h1>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/"><i class="fas fa-home" aria-hidden="true"></i> Beranda</a>
+        <a href="/search"><i class="fas fa-search" aria-hidden="true"></i> Cari Film</a>
+        <a href="/create"><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a>
+        <a href="/edit"><i class="fas fa-edit" aria-hidden="true"></i> Edit</a>
+        <a href="/delete"><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a>
+      </nav>
+    </header>
+
+    <main id="main-content" role="main">
+      <section class="section register-box" aria-labelledby="register-title">
+        <h2 id="register-title">
+          <i class="fas fa-user-plus" aria-hidden="true"></i> Buat Akun Baru
+        </h2>
+        <p class="lead">Bergabunglah dengan Movieku untuk mengelola koleksi film Anda.</p>
+        <form id="register-form" aria-describedby="register-status" novalidate>
+          <div>
+            <label for="name-input"
+              ><i class="fas fa-user" aria-hidden="true"></i> Nama Lengkap</label
+            >
+            <div class="input-group">
+              <input
+                type="text"
+                name="name"
+                id="name-input"
+                placeholder="Masukkan nama Anda"
+                required
+                autocomplete="name"
+                aria-required="true"
+              />
+              <i class="fas fa-user field-icon" aria-hidden="true"></i>
+            </div>
+          </div>
+          <div>
+            <label for="email-input"
+              ><i class="fas fa-envelope" aria-hidden="true"></i> Email</label
+            >
+            <div class="input-group">
+              <input
+                type="email"
+                name="email"
+                id="email-input"
+                placeholder="nama@email.com"
+                required
+                autocomplete="email"
+                aria-required="true"
+              />
+              <i class="fas fa-envelope field-icon" aria-hidden="true"></i>
+            </div>
+          </div>
+          <div>
+            <label for="password"><i class="fas fa-lock" aria-hidden="true"></i> Password</label>
+            <div class="input-group">
+              <input
+                type="password"
+                name="password"
+                id="password"
+                placeholder="Buat password yang kuat"
+                required
+                autocomplete="new-password"
+                aria-required="true"
+                minlength="8"
+              />
+              <i class="fas fa-lock field-icon" aria-hidden="true"></i>
+              <button
+                type="button"
+                class="password-toggle"
+                id="toggle-password"
+                aria-label="Tampilkan password"
+                aria-pressed="false"
+              >
+                <i class="fas fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit">
+            <i class="fas fa-check" aria-hidden="true"></i> Daftar Sekarang
+          </button>
+        </form>
+        <div id="register-status" class="status" role="status" aria-live="polite">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Lengkapi form di atas
+        </div>
+        <footer class="footer-links">
+          Sudah punya akun?
+          <a href="/login"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Login</a>
+        </footer>
+      </section>
+
+      <aside class="section" aria-labelledby="tips-title">
+        <h2 id="tips-title"><i class="fas fa-lightbulb" aria-hidden="true"></i> Tips Keamanan</h2>
+        <div class="tips-card">
+          <h3><i class="fas fa-shield-alt" aria-hidden="true"></i> Membuat Password yang Kuat</h3>
+          <ul class="tips-list" role="list">
+            <li>Gunakan minimal 8 karakter</li>
+            <li>Kombinasi huruf besar, kecil, angka &amp; simbol</li>
+            <li>Hindari informasi pribadi</li>
+            <li>Jangan gunakan password yang sama di tempat lain</li>
+          </ul>
+        </div>
+        <p class="helper" style="margin-top: 16px">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Setelah registrasi berhasil,
+          lanjutkan ke halaman login untuk mendapatkan token akses.
+        </p>
+      </aside>
+    </main>
+
+    <script type="module">
+      import { fetchJSON, statusSuccess, statusError, statusInfo } from './common.js'
+
+      const form = document.getElementById('register-form')
+      const statusEl = document.getElementById('register-status')
+      const togglePassword = document.getElementById('toggle-password')
+      const passwordInput = document.getElementById('password')
+
+      togglePassword?.addEventListener('click', () => {
+        const type = passwordInput.type === 'password' ? 'text' : 'password'
+        passwordInput.type = type
+        togglePassword.innerHTML =
+          type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>'
+      })
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        statusInfo(statusEl, '<i class="fas fa-spinner fa-spin"></i> Mendaftarkan akun...')
+        const payload = Object.fromEntries(new FormData(form).entries())
+        try {
+          await fetchJSON('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          statusSuccess(statusEl, '✓ Registrasi berhasil! Silakan login.')
+          form.reset()
+        } catch (err) {
+          statusError(statusEl, '✕ ' + err.message)
+        }
+      })
+    </script>
+  </body>
 </html>

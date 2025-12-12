@@ -1,64 +1,837 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Movieku Console</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-</head>
-<body>
-  <header>
-    <h1>Movieku <span>Console</span></h1>
-    <p class="hero">Setiap fitur kini berada di halaman terpisah untuk alur yang lebih jelas.</p>
-    <nav class="top-nav">
-      <a href="/login">Login</a>
-      <a href="/register">Registrasi</a>
-      <a href="/search">Cari Film</a>
-      <a href="/create">Tambah Film</a>
-      <a href="/edit">Edit Film</a>
-      <a href="/delete">Hapus Film</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Movieku Console - Platform manajemen film modern dengan antarmuka elegan dan fitur lengkap"
+    />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Movieku Console - Dashboard Film</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <main>
-    <section class="section">
-      <h2>Panduan Singkat</h2>
-      <p class="lead">Gunakan tautan di atas untuk berpindah antar-halaman sesuai kebutuhan Anda.</p>
-      <ul>
-        <li><strong>Login</strong> untuk mendapatkan token Bearer.</li>
-        <li><strong>Registrasi</strong> untuk membuat akun baru.</li>
-        <li><strong>Cari Film</strong> memuat pencarian, detail, dan rekomendasi (perlu token).</li>
-        <li><strong>Tambah</strong>, <strong>Edit</strong>, dan <strong>Hapus</strong> fokus pada aksi CRUD tunggal (perlu token).</li>
-      </ul>
-      <p class="helper">Token disimpan di <code>localStorage</code> dan dipakai otomatis di setiap halaman.</p>
-      <div class="footer-links">Belum ada akun? <a href="/register">Registrasi di sini</a></div>
-    </section>
-
-    <section class="section grid-two">
-      <div>
-        <h2>Status Token</h2>
-        <p id="token-status" class="status">Memeriksa token...</p>
-        <button id="clear-token" class="secondary">Hapus Token</button>
+    <header role="banner" class="site-header">
+      <div class="header-top">
+        <div class="brand">
+          <h1>Movieku <span>Console</span></h1>
+        </div>
+        <div class="auth-buttons" id="auth-buttons">
+          <a href="/login" class="btn-auth btn-login" aria-label="Login ke akun">
+            <i class="fas fa-sign-in-alt" aria-hidden="true"></i> Login
+          </a>
+          <a href="/register" class="btn-auth btn-register" aria-label="Daftar akun baru">
+            <i class="fas fa-user-plus" aria-hidden="true"></i> Daftar
+          </a>
+        </div>
       </div>
+      <p class="hero">
+        Platform manajemen film modern dengan antarmuka yang elegan dan fitur lengkap.
+      </p>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/" class="active" aria-current="page" aria-label="Beranda">
+          <i class="fas fa-home" aria-hidden="true"></i> Beranda</a
+        >
+        <a href="/search" aria-label="Cari film"
+          ><i class="fas fa-search" aria-hidden="true"></i> Cari Film</a
+        >
+        <a href="/create" aria-label="Tambah film baru"
+          ><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a
+        >
+        <a href="/edit" aria-label="Edit film"
+          ><i class="fas fa-edit" aria-hidden="true"></i> Edit</a
+        >
+        <a href="/delete" aria-label="Hapus film"
+          ><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a
+        >
+      </nav>
+    </header>
+
+    <!-- Movie Slider Section -->
+    <section class="movie-slider-section" aria-labelledby="slider-title">
+      <div class="slider-header">
+        <h2 id="slider-title"><i class="fas fa-fire" aria-hidden="true"></i> Film Trending</h2>
+        <div class="slider-controls" role="group" aria-label="Slider navigation">
+          <button class="slider-btn prev" id="slider-prev" aria-label="Previous slide">
+            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <button class="slider-btn next" id="slider-next" aria-label="Next slide">
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <div class="slider-container" id="movie-slider" role="region" aria-label="Movie carousel">
+        <div class="slider-track" id="slider-track">
+          <!-- Movies will be loaded here -->
+          <div class="slider-loading">
+            <div class="spinner"></div>
+            <p>Memuat film trending...</p>
+          </div>
+        </div>
+      </div>
+      <div class="slider-dots" id="slider-dots" role="tablist" aria-label="Slider pagination"></div>
     </section>
-  </main>
 
-  <script type="module">
-    import { getToken, clearToken, statusInfo, statusSuccess } from './common.js';
+    <main id="main-content" role="main">
+      <section class="section" aria-labelledby="guide-title">
+        <h2 id="guide-title">
+          <i class="fas fa-book-open" aria-hidden="true"></i> Panduan Singkat
+        </h2>
+        <p class="lead">Navigasi mudah antar fitur menggunakan menu di atas.</p>
+        <ul role="list">
+          <li>
+            <strong><i class="fas fa-key" aria-hidden="true"></i> Login</strong> — Dapatkan token
+            Bearer untuk akses penuh.
+          </li>
+          <li>
+            <strong><i class="fas fa-user-plus" aria-hidden="true"></i> Registrasi</strong> — Buat
+            akun baru dengan cepat.
+          </li>
+          <li>
+            <strong><i class="fas fa-search" aria-hidden="true"></i> Cari Film</strong> — Pencarian,
+            detail &amp; rekomendasi TMDb.
+          </li>
+          <li>
+            <strong><i class="fas fa-cog" aria-hidden="true"></i> CRUD</strong> — Tambah, Edit,
+            Hapus data film.
+          </li>
+        </ul>
+        <p class="helper">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Token tersimpan di
+          <code>localStorage</code> dan otomatis digunakan.
+        </p>
+        <div class="footer-links">
+          Belum punya akun?
+          <a href="/register"
+            ><i class="fas fa-arrow-right" aria-hidden="true"></i> Registrasi sekarang</a
+          >
+        </div>
+      </section>
 
-    const statusEl = document.getElementById('token-status');
-    const token = getToken();
-    if (token) {
-      statusSuccess(statusEl, 'Token tersedia. Anda dapat langsung menggunakan fitur dashboard.');
-    } else {
-      statusInfo(statusEl, 'Token belum ada. Silakan login untuk mendapatkan token.');
-    }
+      <section class="section" aria-labelledby="token-title">
+        <h2 id="token-title"><i class="fas fa-shield-alt" aria-hidden="true"></i> Status Token</h2>
+        <p class="lead">Kelola status autentikasi Anda di sini.</p>
+        <div class="token-card" id="token-card" role="status" aria-live="polite">
+          <div class="token-icon" id="token-icon" aria-hidden="true">
+            <i class="fas fa-lock"></i>
+          </div>
+          <p id="token-status" class="status">Memeriksa token...</p>
+        </div>
+        <div class="grid-two" style="margin-top: 16px">
+          <button
+            id="clear-token"
+            class="secondary"
+            type="button"
+            aria-label="Hapus token tersimpan"
+          >
+            <i class="fas fa-trash" aria-hidden="true"></i> Hapus Token
+          </button>
+          <a class="button-link" href="/login" aria-label="Menuju halaman login"
+            ><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Menuju Login</a
+          >
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="features-title">
+        <h2 id="features-title"><i class="fas fa-rocket" aria-hidden="true"></i> Fitur Utama</h2>
+        <p class="lead">Jelajahi kemampuan Movieku Console.</p>
+        <div class="feature-grid" role="list">
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true"><i class="fas fa-film"></i></div>
+            <h3>Manajemen Film</h3>
+            <p>CRUD lengkap untuk koleksi film Anda.</p>
+          </article>
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true"><i class="fas fa-magic"></i></div>
+            <h3>TMDb Integration</h3>
+            <p>Rekomendasi film dari database global.</p>
+          </article>
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true"><i class="fas fa-bolt"></i></div>
+            <h3>Real-time Search</h3>
+            <p>Pencarian cepat dengan filter genre.</p>
+          </article>
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true"><i class="fas fa-lock"></i></div>
+            <h3>Secure Auth</h3>
+            <p>JWT authentication untuk keamanan.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <style>
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+      /* Header Layout */
+      .site-header {
+        padding: 16px 24px 16px;
+      }
+      .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto 8px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .brand h1 {
+        margin: 0;
+      }
+      .auth-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .btn-auth {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: var(--radius-full);
+        font-size: 14px;
+        font-weight: 500;
+        transition: all var(--transition-normal);
+        text-decoration: none;
+      }
+      .btn-login {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-primary);
+      }
+      .btn-login:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+      }
+      .btn-register {
+        background: var(--gradient-primary);
+        color: var(--bg-primary);
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+      }
+      .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        color: var(--bg-primary);
+      }
+      .user-profile {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 16px;
+        background: var(--glass-bg);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: var(--radius-full);
+        color: var(--accent-success);
+      }
+      .user-profile.show {
+        display: flex;
+      }
+      .auth-buttons.hidden {
+        display: none;
+      }
+      .token-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        text-align: center;
+        transition: all var(--transition-normal);
+      }
+      .token-card.authenticated {
+        border-color: rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.05);
+      }
+      .token-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 16px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: var(--bg-primary);
+      }
+      .token-card.authenticated .token-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .feature-card {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        padding: 20px 16px;
+        text-align: center;
+        transition: all var(--transition-normal);
+      }
+      .feature-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(0, 212, 255, 0.3);
+        background: rgba(0, 212, 255, 0.05);
+      }
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        background: var(--gradient-primary);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: var(--bg-primary);
+      }
+      .feature-card h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        color: var(--text-primary);
+      }
+      .feature-card p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      ul li i {
+        color: var(--accent-primary);
+        margin-right: 8px;
+      }
+
+      /* Movie Slider Styles */
+      .movie-slider-section {
+        max-width: 1400px;
+        margin: 0 auto 40px;
+        padding: 0 20px;
+      }
+      .slider-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .slider-header h2 {
+        font-size: 24px;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+      }
+      .slider-header h2 i {
+        -webkit-text-fill-color: var(--accent-primary);
+      }
+      .slider-controls {
+        display: flex;
+        gap: 12px;
+      }
+      .slider-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        padding: 0;
+        box-shadow: none;
+      }
+      .slider-btn:hover {
+        background: var(--gradient-primary);
+        border-color: transparent;
+        color: var(--bg-primary);
+        transform: scale(1.1);
+        box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+      }
+      .slider-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .slider-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--radius-xl);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        padding: 24px;
+      }
+      .slider-track {
+        display: flex;
+        gap: 20px;
+        transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        will-change: transform;
+      }
+      .slider-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 320px;
+        gap: 16px;
+        color: var(--text-muted);
+      }
+      .slider-card {
+        flex: 0 0 200px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        border: 1px solid transparent;
+        position: relative;
+      }
+      .slider-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        border-color: var(--accent-primary);
+        box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+      }
+      .slider-card img {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        transition: transform var(--transition-normal);
+      }
+      .slider-card:hover img {
+        transform: scale(1.05);
+      }
+      .slider-card-info {
+        padding: 16px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 100%);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      .slider-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .slider-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .slider-card-rating {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--accent-warning);
+      }
+      .slider-card-rating i {
+        font-size: 10px;
+      }
+      .slider-card-year {
+        color: var(--text-secondary);
+      }
+      .slider-card-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: var(--gradient-primary);
+        color: var(--bg-primary);
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+      }
+      .slider-dots {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .slider-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--glass-border);
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        padding: 0;
+        box-shadow: none;
+      }
+      .slider-dot:hover {
+        background: var(--accent-primary);
+        transform: scale(1.2);
+        box-shadow: none;
+      }
+      .slider-dot.active {
+        background: var(--gradient-primary);
+        width: 30px;
+        border-radius: var(--radius-full);
+        box-shadow: none;
+      }
+      .slider-error {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+      }
+      .slider-error i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      @media (max-width: 768px) {
+        .slider-card {
+          flex: 0 0 160px;
+        }
+        .slider-card img {
+          height: 220px;
+        }
+        .slider-header h2 {
+          font-size: 20px;
+        }
+        .slider-btn {
+          width: 38px;
+          height: 38px;
+        }
+      }
+    </style>
+
+    <script type="module">
+      import { getToken, clearToken, statusInfo, statusSuccess } from './common.js'
+
+      const statusEl = document.getElementById('token-status')
+      const tokenCard = document.getElementById('token-card')
+      const tokenIcon = document.getElementById('token-icon')
+      const authButtons = document.getElementById('auth-buttons')
+      const token = getToken()
+
+      // Update UI based on auth state
+      const updateAuthUI = (hasToken) => {
+        if (hasToken) {
+          statusSuccess(statusEl, '✓ Token tersedia! Anda dapat menggunakan semua fitur.')
+          tokenCard.classList.add('authenticated')
+          tokenIcon.innerHTML = '<i class="fas fa-unlock"></i>'
+          // Show logged in state in header
+          authButtons.innerHTML = `
+            <div class="user-profile show">
+              <i class="fas fa-user-check"></i>
+              <span>Logged In</span>
+            </div>
+            <button id="header-logout" class="btn-auth btn-login" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--accent-danger);">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+          `
+          document.getElementById('header-logout')?.addEventListener('click', () => {
+            clearToken()
+            location.reload()
+          })
+        } else {
+          statusInfo(statusEl, 'Token belum ada. Silakan login untuk mendapatkan akses.')
+          tokenCard.classList.remove('authenticated')
+          tokenIcon.innerHTML = '<i class="fas fa-lock"></i>'
+        }
+      }
+
+      updateAuthUI(!!token)
 
       document.getElementById('clear-token').addEventListener('click', () => {
-      clearToken();
-      statusInfo(statusEl, 'Token dihapus. Silakan login kembali.');
-    });
-  </script>
-</body>
+        clearToken()
+        updateAuthUI(false)
+        location.reload()
+      })
+
+      // ==========================================
+      // Movie Slider Functionality
+      // ==========================================
+      const TMDB_API_KEY = 'f8079effc3a7dc8a79584916f9350222'
+      const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
+      const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500'
+
+      const sliderTrack = document.getElementById('slider-track')
+      const sliderDots = document.getElementById('slider-dots')
+      const prevBtn = document.getElementById('slider-prev')
+      const nextBtn = document.getElementById('slider-next')
+
+      let currentSlide = 0
+      let totalSlides = 0
+      let movies = []
+      let slidesPerView = 5
+      let autoSlideInterval = null
+
+      // Calculate slides per view based on screen width
+      const calcSlidesPerView = () => {
+        const width = window.innerWidth
+        if (width < 480) return 2
+        if (width < 768) return 3
+        if (width < 1024) return 4
+        return 5
+      }
+
+      // Fetch trending movies from TMDb
+      const fetchTrendingMovies = async () => {
+        try {
+          const response = await fetch(
+            `${TMDB_BASE_URL}/trending/movie/week?api_key=${TMDB_API_KEY}&language=id-ID`
+          )
+          if (!response.ok) throw new Error('Failed to fetch')
+          const data = await response.json()
+          return data.results.slice(0, 15) // Get first 15 movies
+        } catch (error) {
+          console.error('Error fetching movies:', error)
+          return null
+        }
+      }
+
+      // Create movie card HTML
+      const createMovieCard = (movie, index) => {
+        const posterUrl = movie.poster_path
+          ? `${TMDB_IMG_BASE}${movie.poster_path}`
+          : 'https://via.placeholder.com/200x280?text=No+Image'
+        const year = movie.release_date ? new Date(movie.release_date).getFullYear() : '-'
+        const rating = movie.vote_average?.toFixed(1) || '-'
+
+        return `
+          <article class="slider-card" data-movie-id="${movie.id}" tabindex="0" role="button" aria-label="${movie.title}">
+            ${index < 3 ? `<span class="slider-card-badge">#${index + 1} Trending</span>` : ''}
+            <img src="${posterUrl}" alt="${movie.title}" loading="lazy" />
+            <div class="slider-card-info">
+              <h3 class="slider-card-title">${movie.title}</h3>
+              <div class="slider-card-meta">
+                <span class="slider-card-rating">
+                  <i class="fas fa-star" aria-hidden="true"></i> ${rating}
+                </span>
+                <span class="slider-card-year">${year}</span>
+              </div>
+            </div>
+          </article>
+        `
+      }
+
+      // Create pagination dots
+      const createDots = () => {
+        sliderDots.innerHTML = ''
+        for (let i = 0; i < totalSlides; i++) {
+          const dot = document.createElement('button')
+          dot.className = `slider-dot ${i === currentSlide ? 'active' : ''}`
+          dot.setAttribute('role', 'tab')
+          dot.setAttribute('aria-label', `Go to slide ${i + 1}`)
+          dot.setAttribute('aria-selected', i === currentSlide)
+          dot.addEventListener('click', () => goToSlide(i))
+          sliderDots.appendChild(dot)
+        }
+      }
+
+      // Update dots state
+      const updateDots = () => {
+        const dots = sliderDots.querySelectorAll('.slider-dot')
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('active', i === currentSlide)
+          dot.setAttribute('aria-selected', i === currentSlide)
+        })
+      }
+
+      // Go to specific slide
+      const goToSlide = (index) => {
+        currentSlide = Math.max(0, Math.min(index, totalSlides - 1))
+        const cardWidth = 220 // card width + gap
+        sliderTrack.style.transform = `translateX(-${currentSlide * cardWidth * slidesPerView}px)`
+        updateDots()
+        updateButtons()
+      }
+
+      // Update button states
+      const updateButtons = () => {
+        prevBtn.disabled = currentSlide === 0
+        nextBtn.disabled = currentSlide >= totalSlides - 1
+      }
+
+      // Next slide
+      const nextSlide = () => {
+        if (currentSlide < totalSlides - 1) {
+          goToSlide(currentSlide + 1)
+        } else {
+          goToSlide(0) // Loop back to first slide
+        }
+      }
+
+      // Previous slide
+      const prevSlide = () => {
+        if (currentSlide > 0) {
+          goToSlide(currentSlide - 1)
+        } else {
+          goToSlide(totalSlides - 1) // Loop to last slide
+        }
+      }
+
+      // Start auto slide
+      const startAutoSlide = () => {
+        stopAutoSlide()
+        autoSlideInterval = setInterval(nextSlide, 5000)
+      }
+
+      // Stop auto slide
+      const stopAutoSlide = () => {
+        if (autoSlideInterval) {
+          clearInterval(autoSlideInterval)
+          autoSlideInterval = null
+        }
+      }
+
+      // Initialize slider
+      const initSlider = async () => {
+        movies = await fetchTrendingMovies()
+
+        if (!movies || movies.length === 0) {
+          sliderTrack.innerHTML = `
+            <div class="slider-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Gagal memuat film trending. Coba refresh halaman.</p>
+            </div>
+          `
+          return
+        }
+
+        slidesPerView = calcSlidesPerView()
+        totalSlides = Math.ceil(movies.length / slidesPerView)
+
+        sliderTrack.innerHTML = movies.map((movie, i) => createMovieCard(movie, i)).join('')
+        createDots()
+        updateButtons()
+
+        // Event listeners
+        prevBtn.addEventListener('click', () => {
+          prevSlide()
+          startAutoSlide() // Reset auto slide timer
+        })
+
+        nextBtn.addEventListener('click', () => {
+          nextSlide()
+          startAutoSlide() // Reset auto slide timer
+        })
+
+        // Pause auto slide on hover
+        const sliderContainer = document.getElementById('movie-slider')
+        sliderContainer.addEventListener('mouseenter', stopAutoSlide)
+        sliderContainer.addEventListener('mouseleave', startAutoSlide)
+
+        // Handle card clicks - navigate to search page with movie details
+        sliderTrack.addEventListener('click', (e) => {
+          const card = e.target.closest('.slider-card')
+          if (card) {
+            const movieId = card.dataset.movieId
+            window.location.href = `/search?tmdb=${movieId}`
+          }
+        })
+
+        // Keyboard navigation
+        sliderTrack.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            const card = e.target.closest('.slider-card')
+            if (card) {
+              e.preventDefault()
+              const movieId = card.dataset.movieId
+              window.location.href = `/search?tmdb=${movieId}`
+            }
+          }
+        })
+
+        // Responsive handling
+        window.addEventListener('resize', () => {
+          const newSlidesPerView = calcSlidesPerView()
+          if (newSlidesPerView !== slidesPerView) {
+            slidesPerView = newSlidesPerView
+            totalSlides = Math.ceil(movies.length / slidesPerView)
+            currentSlide = Math.min(currentSlide, totalSlides - 1)
+            createDots()
+            goToSlide(currentSlide)
+          }
+        })
+
+        // Touch/swipe support
+        let touchStartX = 0
+        let touchEndX = 0
+
+        sliderContainer.addEventListener(
+          'touchstart',
+          (e) => {
+            touchStartX = e.changedTouches[0].screenX
+            stopAutoSlide()
+          },
+          { passive: true }
+        )
+
+        sliderContainer.addEventListener(
+          'touchend',
+          (e) => {
+            touchEndX = e.changedTouches[0].screenX
+            const diff = touchStartX - touchEndX
+            if (Math.abs(diff) > 50) {
+              if (diff > 0) {
+                nextSlide()
+              } else {
+                prevSlide()
+              }
+            }
+            startAutoSlide()
+          },
+          { passive: true }
+        )
+
+        // Start auto sliding
+        startAutoSlide()
+      }
+
+      // Init slider on load
+      initSlider()
+    </script>
+  </body>
 </html>

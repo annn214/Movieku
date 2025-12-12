@@ -1,93 +1,328 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tambah Film - Movieku</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-</head>
-<body>
-  <header>
-    <h1>Tambah <span>Film</span></h1>
-    <nav class="top-nav">
-      <a href="/">Beranda</a>
-      <a class="active" href="/create">Tambah</a>
-      <a href="/search">Cari</a>
-      <a href="/edit">Edit</a>
-      <a href="/delete">Hapus</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="section">
-      <h2>Form Tambah</h2>
-      <p class="lead">Pastikan sudah login karena endpoint ini memerlukan token.</p>
-      <form id="create-form">
-        <label>Judul</label>
-        <input type="text" name="title" required />
-        <label>Tahun</label>
-        <input type="number" name="year" min="1900" max="2100" />
-        <label>Genre</label>
-        <input type="text" name="genre" placeholder="Pisahkan dengan koma" />
-        <label>Synopsis</label>
-        <textarea name="synopsis" rows="3"></textarea>
-        <label>Rating (0-10)</label>
-        <input type="number" step="0.1" min="0" max="10" name="rating" />
-        <button type="submit">Simpan Film</button>
-      </form>
-      <p id="create-status" class="status">Menunggu input...</p>
-    </section>
-
-    <section class="section grid-two">
-      <div>
-        <h2>Token</h2>
-        <p class="helper">Token otomatis diambil dari localStorage.</p>
-        <p id="token-status" class="status"></p>
-      </div>
-    </section>
-  </main>
-
-  <script type="module">
-    import { fetchJSON, authHeaders, ensureAuth, statusInfo, statusError, statusSuccess } from './common.js';
-    const form = document.getElementById('create-form');
-    const statusEl = document.getElementById('create-status');
-    const tokenStatus = document.getElementById('token-status');
-
-    const toggleFormState = (enabled) => {
-      [...form.elements].forEach((el) => (el.disabled = !enabled));
-    };
-
-    const refreshTokenState = () => {
-      const hasToken = Boolean(authHeaders().Authorization);
-      tokenStatus.textContent = hasToken
-        ? 'Token tersedia. Anda dapat menambah film.'
-        : 'Token tidak ada. Silakan login terlebih dahulu.';
-      toggleFormState(hasToken);
-    };
-
-    refreshTokenState();
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!ensureAuth(tokenStatus)) return;
-      statusInfo(statusEl, 'Menyimpan film...');
-      const payload = Object.fromEntries(new FormData(form).entries());
-      if (payload.genre) payload.genre = payload.genre.split(',').map((g) => g.trim()).filter(Boolean);
-      if (payload.year) payload.year = Number(payload.year);
-      if (payload.rating) payload.rating = Number(payload.rating);
-      try {
-        await fetchJSON('/movies', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders() },
-          body: JSON.stringify(payload),
-        });
-        statusSuccess(statusEl, 'Film berhasil disimpan.');
-        form.reset();
-     } catch (err) {
-        statusError(statusEl, err.message);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tambah film baru ke koleksi Movieku" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Tambah Film - Movieku</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+    <style>
+      .create-form {
+        max-width: 600px;
       }
-    });
-  </script>
-</body>
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 600px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .input-group {
+        position: relative;
+      }
+      .input-group i.field-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        transition: color var(--transition-normal);
+        pointer-events: none;
+      }
+      .input-group input,
+      .input-group select {
+        padding-left: 48px;
+      }
+      .input-group:focus-within i.field-icon {
+        color: var(--accent-primary);
+      }
+      .rating-input {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .rating-display {
+        background: rgba(0, 212, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        color: var(--accent-primary);
+        min-width: 60px;
+        text-align: center;
+      }
+      input[type='range'] {
+        -webkit-appearance: none;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-full);
+        height: 8px;
+        flex: 1;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .token-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+      }
+      .token-badge.active {
+        border-color: rgba(16, 185, 129, 0.3);
+      }
+      .token-badge i {
+        font-size: 18px;
+      }
+      .token-badge.active i {
+        color: var(--accent-success);
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      button i {
+        margin-right: 8px;
+      }
+      label i {
+        margin-right: 6px;
+        opacity: 0.7;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
+      <h1>Tambah <span>Film</span></h1>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/"><i class="fas fa-home" aria-hidden="true"></i> Beranda</a>
+        <a class="active" href="/create" aria-current="page"
+          ><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a
+        >
+        <a href="/search"><i class="fas fa-search" aria-hidden="true"></i> Cari</a>
+        <a href="/edit"><i class="fas fa-edit" aria-hidden="true"></i> Edit</a>
+        <a href="/delete"><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a>
+      </nav>
+    </header>
+
+    <main id="main-content" role="main">
+      <section class="section create-form" aria-labelledby="create-title">
+        <h2 id="create-title">
+          <i class="fas fa-plus-circle" aria-hidden="true"></i> Form Tambah Film
+        </h2>
+        <p class="lead">Lengkapi informasi film yang ingin ditambahkan ke database.</p>
+        <form id="create-form" aria-describedby="create-status" novalidate>
+          <div>
+            <label for="title-input"
+              ><i class="fas fa-film" aria-hidden="true"></i> Judul Film</label
+            >
+            <div class="input-group">
+              <input
+                type="text"
+                name="title"
+                id="title-input"
+                placeholder="Masukkan judul film"
+                required
+                aria-required="true"
+              />
+              <i class="fas fa-film field-icon" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <label for="year-input"
+                ><i class="fas fa-calendar" aria-hidden="true"></i> Tahun Rilis</label
+              >
+              <div class="input-group">
+                <input
+                  type="number"
+                  name="year"
+                  id="year-input"
+                  min="1900"
+                  max="2100"
+                  placeholder="2024"
+                  inputmode="numeric"
+                />
+                <i class="fas fa-calendar field-icon" aria-hidden="true"></i>
+              </div>
+            </div>
+            <div>
+              <label for="genre-input"><i class="fas fa-tags" aria-hidden="true"></i> Genre</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  name="genre"
+                  id="genre-input"
+                  placeholder="action, drama, comedy"
+                />
+                <i class="fas fa-tags field-icon" aria-hidden="true"></i>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="synopsis-input"
+              ><i class="fas fa-align-left" aria-hidden="true"></i> Synopsis</label
+            >
+            <textarea
+              name="synopsis"
+              id="synopsis-input"
+              rows="4"
+              placeholder="Ceritakan sinopsis film ini..."
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="rating-slider"><i class="fas fa-star" aria-hidden="true"></i> Rating</label>
+            <div class="rating-input">
+              <input
+                type="range"
+                id="rating-slider"
+                name="rating-range"
+                min="0"
+                max="10"
+                step="0.1"
+                value="7"
+                aria-describedby="rating-display"
+              />
+              <output class="rating-display" id="rating-display" for="rating-slider">⭐ 7.0</output>
+              <input type="hidden" name="rating" id="rating-value" value="7" />
+            </div>
+          </div>
+
+          <button type="submit"><i class="fas fa-save" aria-hidden="true"></i> Simpan Film</button>
+        </form>
+        <div id="create-status" class="status" role="status" aria-live="polite">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Lengkapi form di atas
+        </div>
+      </section>
+
+      <aside class="section" aria-labelledby="auth-title">
+        <h2 id="auth-title"><i class="fas fa-key" aria-hidden="true"></i> Status Autentikasi</h2>
+        <p class="lead">Token diperlukan untuk menambah film.</p>
+        <div class="token-badge" id="token-badge" role="status" aria-live="polite">
+          <i class="fas fa-lock" id="token-icon" aria-hidden="true"></i>
+          <span id="token-status">Memeriksa...</span>
+        </div>
+        <p class="helper" style="margin-top: 16px">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Token diambil otomatis dari
+          localStorage. <a href="/login">Login di sini</a> jika belum.
+        </p>
+      </aside>
+    </main>
+
+    <script type="module">
+      import {
+        fetchJSON,
+        authHeaders,
+        ensureAuth,
+        statusInfo,
+        statusError,
+        statusSuccess,
+      } from './common.js'
+
+      const form = document.getElementById('create-form')
+      const statusEl = document.getElementById('create-status')
+      const tokenStatus = document.getElementById('token-status')
+      const tokenBadge = document.getElementById('token-badge')
+      const tokenIcon = document.getElementById('token-icon')
+      const ratingSlider = document.getElementById('rating-slider')
+      const ratingDisplay = document.getElementById('rating-display')
+      const ratingValue = document.getElementById('rating-value')
+
+      // Rating slider
+      ratingSlider.addEventListener('input', () => {
+        const val = parseFloat(ratingSlider.value).toFixed(1)
+        ratingDisplay.textContent = `⭐ ${val}`
+        ratingValue.value = val
+      })
+
+      const toggleFormState = (enabled) => {
+        ;[...form.elements].forEach((el) => (el.disabled = !enabled))
+      }
+
+      const refreshTokenState = () => {
+        const hasToken = Boolean(authHeaders().Authorization)
+        if (hasToken) {
+          tokenStatus.textContent = 'Token aktif'
+          tokenBadge.classList.add('active')
+          tokenIcon.className = 'fas fa-unlock'
+          tokenIcon.style.color = 'var(--accent-success)'
+        } else {
+          tokenStatus.textContent = 'Tidak ada token'
+          tokenBadge.classList.remove('active')
+          tokenIcon.className = 'fas fa-lock'
+          tokenIcon.style.color = ''
+        }
+        toggleFormState(hasToken)
+      }
+
+      refreshTokenState()
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (!ensureAuth(tokenStatus)) return
+        statusInfo(statusEl, '<i class="fas fa-spinner fa-spin"></i> Menyimpan film...')
+        const payload = Object.fromEntries(new FormData(form).entries())
+        if (payload.genre)
+          payload.genre = payload.genre
+            .split(',')
+            .map((g) => g.trim())
+            .filter(Boolean)
+        if (payload.year) payload.year = Number(payload.year)
+        if (payload.rating) payload.rating = Number(payload.rating)
+        try {
+          await fetchJSON('/movies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify(payload),
+          })
+          statusSuccess(statusEl, '✓ Film berhasil disimpan!')
+          form.reset()
+          ratingSlider.value = 7
+          ratingDisplay.textContent = '⭐ 7.0'
+          ratingValue.value = 7
+        } catch (err) {
+          statusError(statusEl, '✕ ' + err.message)
+        }
+      })
+    </script>
+  </body>
 </html>

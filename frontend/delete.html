@@ -1,78 +1,254 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hapus Film - Movieku</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-</head>
-<body>
-  <header>
-    <h1>Hapus <span>Film</span></h1>
-    <nav class="top-nav">
-      <a href="/">Beranda</a>
-      <a href="/search">Cari</a>
-      <a href="/create">Tambah</a>
-      <a href="/edit">Edit</a>
-      <a class="active" href="/delete">Hapus</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="section">
-      <h2>Konfirmasi Penghapusan</h2>
-      <p class="lead">Masukkan ID film yang ingin dihapus. Token diperlukan.</p>
-      <form id="delete-form">
-        <label>ID Film</label>
-        <input type="text" name="id" required />
-        <button type="submit" class="danger">Hapus Film</button>
-      </form>
-      <p id="delete-status" class="status">Menunggu aksi...</p>
-    </section>
-
-    <section class="section grid-two">
-      <div>
-        <h2>Catatan</h2>
-        <p class="helper">Hanya pemilik film yang dapat menghapusnya. Pastikan Anda login dengan akun yang benar.</p>
-      </div>
-    </section>
-  </main>
-
-  <script type="module">
-    import { fetchJSON, authHeaders, ensureAuth, statusInfo, statusError, statusSuccess } from './common.js';
-
-    const form = document.getElementById('delete-form');
-    const statusEl = document.getElementById('delete-status');
-
-    const toggleForm = (enabled) => {
-      [...form.elements].forEach((el) => (el.disabled = !enabled));
-    };
-
-    const ensureAccess = () => {
-      const allowed = ensureAuth(statusEl);
-      toggleForm(allowed);
-      return allowed;
-    };
-
-    ensureAccess();
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!ensureAccess()) return;
-      const id = new FormData(form).get('id');
-      statusInfo(statusEl, 'Menghapus film...');
-      try {
-        await fetchJSON(`/movies/${id}`, {
-          method: 'DELETE',
-          headers: authHeaders(),
-        });
-        statusSuccess(statusEl, 'Film berhasil dihapus.');
-        form.reset();
-      } catch (err) {
-        statusError(statusEl, err.message);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Hapus film dari koleksi Movieku" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Hapus Film - Movieku</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+    <style>
+      .delete-container {
+        max-width: 500px;
+        margin: 0 auto;
       }
-    });
-  </script>
-</body>
+      .warning-card {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .warning-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        background: var(--gradient-danger);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+      }
+      .warning-card h3 {
+        color: var(--accent-danger);
+        margin: 0 0 8px;
+      }
+      .warning-card p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 14px;
+      }
+      .input-group {
+        position: relative;
+      }
+      .input-group i.field-icon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+      .input-group input {
+        padding-left: 48px;
+      }
+      .input-group:focus-within i.field-icon {
+        color: var(--accent-danger);
+      }
+      .notes-list {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: var(--radius-md);
+        padding: 16px 20px;
+      }
+      .notes-list li {
+        border-bottom-color: rgba(255, 255, 255, 0.05);
+        font-size: 14px;
+      }
+      .notes-list li::before {
+        background: var(--gradient-danger);
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      button i {
+        margin-right: 8px;
+      }
+      label i {
+        margin-right: 6px;
+        opacity: 0.7;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header role="banner">
+      <h1>Hapus <span>Film</span></h1>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/"><i class="fas fa-home" aria-hidden="true"></i> Beranda</a>
+        <a href="/search"><i class="fas fa-search" aria-hidden="true"></i> Cari</a>
+        <a href="/create"><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a>
+        <a href="/edit"><i class="fas fa-edit" aria-hidden="true"></i> Edit</a>
+        <a class="active" href="/delete" aria-current="page"
+          ><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a
+        >
+      </nav>
+    </header>
+
+    <main id="main-content" role="main">
+      <section class="section delete-container" aria-labelledby="delete-title">
+        <div class="warning-card" role="alert" aria-live="polite">
+          <div class="warning-icon" aria-hidden="true">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h3>Perhatian!</h3>
+          <p>Penghapusan bersifat permanen dan tidak dapat dibatalkan.</p>
+        </div>
+
+        <h2 id="delete-title">
+          <i class="fas fa-trash-alt" aria-hidden="true"></i> Konfirmasi Penghapusan
+        </h2>
+        <p class="lead">Masukkan ID film yang ingin dihapus dari database.</p>
+
+        <form id="delete-form" aria-describedby="delete-status" novalidate>
+          <div>
+            <label for="delete-id"
+              ><i class="fas fa-fingerprint" aria-hidden="true"></i> ID Film</label
+            >
+            <div class="input-group">
+              <input
+                type="text"
+                name="id"
+                id="delete-id"
+                placeholder="Masukkan ObjectId film"
+                required
+                aria-required="true"
+              />
+              <i class="fas fa-fingerprint field-icon" aria-hidden="true"></i>
+            </div>
+          </div>
+          <button type="submit" class="danger">
+            <i class="fas fa-trash" aria-hidden="true"></i> Hapus Permanen
+          </button>
+        </form>
+        <div id="delete-status" class="status" role="status" aria-live="polite">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Masukkan ID film yang valid
+        </div>
+      </section>
+
+      <aside class="section" aria-labelledby="info-title">
+        <h2 id="info-title">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Informasi Penting
+        </h2>
+        <ul class="notes-list" role="list">
+          <li>
+            <i class="fas fa-user-shield" aria-hidden="true"></i> <strong>Otorisasi:</strong> Hanya
+            pemilik film yang dapat menghapus
+          </li>
+          <li>
+            <i class="fas fa-key" aria-hidden="true"></i> <strong>Token:</strong> Pastikan sudah
+            login dengan akun yang benar
+          </li>
+          <li>
+            <i class="fas fa-search" aria-hidden="true"></i> <strong>ID Film:</strong> Dapatkan dari
+            halaman
+            <a href="/search">Pencarian</a>
+          </li>
+          <li>
+            <i class="fas fa-undo" aria-hidden="true"></i> <strong>Backup:</strong> Data tidak dapat
+            dipulihkan setelah dihapus
+          </li>
+        </ul>
+      </aside>
+    </main>
+
+    <script type="module">
+      import {
+        fetchJSON,
+        authHeaders,
+        ensureAuth,
+        statusInfo,
+        statusError,
+        statusSuccess,
+      } from './common.js'
+
+      const form = document.getElementById('delete-form')
+      const statusEl = document.getElementById('delete-status')
+
+      const toggleForm = (enabled) => {
+        ;[...form.elements].forEach((el) => (el.disabled = !enabled))
+      }
+
+      const ensureAccess = () => {
+        const allowed = ensureAuth(statusEl)
+        toggleForm(allowed)
+        if (!allowed) {
+          statusError(
+            statusEl,
+            '<i class="fas fa-lock"></i> Token tidak ditemukan. <a href="/login">Login</a> terlebih dahulu.'
+          )
+        }
+        return allowed
+      }
+
+      ensureAccess()
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (!ensureAccess()) return
+
+        const id = new FormData(form).get('id')
+
+        // Konfirmasi sebelum hapus
+        if (
+          !confirm(
+            `Yakin ingin menghapus film dengan ID: ${id}?\n\nTindakan ini tidak dapat dibatalkan!`
+          )
+        ) {
+          return
+        }
+
+        statusInfo(statusEl, '<i class="fas fa-spinner fa-spin"></i> Menghapus film...')
+        try {
+          await fetchJSON(`/movies/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders(),
+          })
+          statusSuccess(statusEl, '✓ Film berhasil dihapus dari database.')
+          form.reset()
+        } catch (err) {
+          statusError(statusEl, '✕ ' + err.message)
+        }
+      })
+    </script>
+  </body>
 </html>

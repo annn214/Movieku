@@ -1,167 +1,391 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - Movieku</title>
-  <link rel="stylesheet" href="styles.css" />
-  <meta name="movieku-api-base" content="" />
-  <meta name="google-client-id" content="72583960710-oo4dmi2263qf0nmqo6ga21h5ec5qe4j3.apps.googleusercontent.com" />
-</head>
-<body>  
-  <header>
-    <h1>Login <span>Movieku</span></h1>
-    <nav class="top-nav">
-      <a class="active" href="/login">Login</a>
-      <a href="/register">Registrasi</a>
-      <a href="/">Beranda</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Login ke Movieku - Platform manajemen film modern" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>Login - Movieku</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <meta name="movieku-api-base" content="" />
+    <meta
+      name="google-client-id"
+      content="72583960710-oo4dmi2263qf0nmqo6ga21h5ec5qe4j3.apps.googleusercontent.com"
+    />
+    <style>
+      .login-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+      }
+      .login-box {
+        width: 100%;
+        max-width: 420px;
+      }
+      .input-group {
+        position: relative;
+      }
+      .input-group i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        transition: color var(--transition-normal);
+      }
+      .input-group input {
+        padding-left: 48px;
+      }
+      .input-group input:focus + i,
+      .input-group:focus-within i {
+        color: var(--accent-primary);
+      }
+      .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        transition: color var(--transition-normal);
+      }
+      .password-toggle:hover {
+        color: var(--accent-primary);
+      }
+      .social-login {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .google-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 14px 24px;
+        background: white;
+        color: #333;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all var(--transition-normal);
+      }
+      .google-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+      }
+      .google-btn img {
+        width: 20px;
+        height: 20px;
+      }
+      .token-display {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        text-align: center;
+      }
+      .token-display.active {
+        border-color: rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.05);
+      }
+      .token-icon {
+        width: 50px;
+        height: 50px;
+        margin: 0 auto 12px;
+        background: var(--glass-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: var(--text-muted);
+      }
+      .token-display.active .token-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+      }
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: 8px 16px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 100;
+        border-radius: 0 0 var(--radius-md) 0;
+        transition: top 0.3s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
+      nav.top-nav a i {
+        margin-right: 6px;
+      }
+      .section h2 i {
+        margin-right: 8px;
+        opacity: 0.8;
+      }
+      button i {
+        margin-right: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <main>
-    <section class="section">
-      <h2>Masuk</h2>
-      <p class="lead">Masukkan email dan password untuk mendapatkan token Bearer.</p>
-       <form id="login-form">
-        <div>
-          <label>Email</label>
-          <input type="email" name="email" required />
+    <header role="banner">
+      <h1>Login <span>Movieku</span></h1>
+      <nav class="top-nav" role="navigation" aria-label="Main navigation">
+        <a href="/"><i class="fas fa-home" aria-hidden="true"></i> Beranda</a>
+        <a href="/search"><i class="fas fa-search" aria-hidden="true"></i> Cari Film</a>
+        <a href="/create"><i class="fas fa-plus-circle" aria-hidden="true"></i> Tambah</a>
+        <a href="/edit"><i class="fas fa-edit" aria-hidden="true"></i> Edit</a>
+        <a href="/delete"><i class="fas fa-trash-alt" aria-hidden="true"></i> Hapus</a>
+      </nav>
+    </header>
+
+    <main id="main-content" role="main">
+      <section class="section login-box" aria-labelledby="login-title">
+        <h2 id="login-title">
+          <i class="fas fa-sign-in-alt" aria-hidden="true"></i> Masuk ke Akun
+        </h2>
+        <p class="lead">Masukkan kredensial Anda untuk mendapatkan akses.</p>
+        <form id="login-form" aria-describedby="login-status" novalidate>
+          <div>
+            <label for="email-input"
+              ><i class="fas fa-envelope" aria-hidden="true"></i> Email</label
+            >
+            <div class="input-group">
+              <input
+                type="email"
+                name="email"
+                id="email-input"
+                placeholder="nama@email.com"
+                required
+                autocomplete="email"
+                aria-required="true"
+              />
+              <i class="fas fa-envelope" aria-hidden="true"></i>
+            </div>
+          </div>
+          <div>
+            <label for="password"><i class="fas fa-lock" aria-hidden="true"></i> Password</label>
+            <div class="input-group">
+              <input
+                type="password"
+                name="password"
+                id="password"
+                placeholder="Masukkan password"
+                required
+                autocomplete="current-password"
+                aria-required="true"
+              />
+              <i class="fas fa-lock" aria-hidden="true"></i>
+              <button
+                type="button"
+                class="password-toggle"
+                id="toggle-password"
+                aria-label="Tampilkan password"
+                aria-pressed="false"
+              >
+                <i class="fas fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit"><i class="fas fa-arrow-right" aria-hidden="true"></i> Login</button>
+        </form>
+        <div id="login-status" class="status" role="status" aria-live="polite">
+          <i class="fas fa-info-circle" aria-hidden="true"></i> Menunggu aksi...
         </div>
-        <div>
-          <label>Password</label>
-          <input type="password" name="password" required />
+
+        <div class="divider" role="separator">atau masuk dengan</div>
+
+        <div id="google-section" class="social-login" aria-label="Login dengan media sosial">
+          <div id="google-button" role="button" aria-label="Login dengan Google"></div>
+          <div id="google-status" class="status muted" role="status" aria-live="polite">
+            <i class="fab fa-google" aria-hidden="true"></i> Google Sign-In tersedia
+          </div>
         </div>
-        <button type="submit">Login</button>
-      </form>
-      <p id="login-status" class="status">Menunggu aksi...</p>
-      <div class="divider">atau</div>
-      <div id="google-section">
-        <p class="lead">Masuk lebih cepat dengan akun Google.</p>
-        <div id="google-button"></div>
-        <p id="google-status" class="status">Menunggu login Google...</p>
 
-      </div>
-      <div class="footer-links">Belum punya akun? <a href="/register">Registrasi</a></div>
-    </section>
+        <footer class="footer-links">
+          Belum punya akun?
+          <a href="/register"><i class="fas fa-user-plus" aria-hidden="true"></i> Registrasi</a>
+        </footer>
+      </section>
 
-     <section class="section grid-two">
-      <div>
-        <h2>Token Saat Ini</h2>
-        <p id="token-view" class="status">Memeriksa token...</p>
-        <div class="grid-two">
-          <button id="clear-token" class="secondary">Hapus Token</button>
-          <a class="button-link" href="/search">Menuju Dashboard</a>
+      <section class="section" aria-labelledby="token-section-title">
+        <h2 id="token-section-title">
+          <i class="fas fa-key" aria-hidden="true"></i> Token Saat Ini
+        </h2>
+        <p class="lead">Status autentikasi dan token tersimpan.</p>
+        <div class="token-display" id="token-display" role="status" aria-live="polite">
+          <div class="token-icon" id="token-icon" aria-hidden="true">
+            <i class="fas fa-lock"></i>
+          </div>
+          <p id="token-view" class="status">Memeriksa token...</p>
         </div>
-      </div>
-    </section>
-  </main>
+        <div class="grid-two" style="margin-top: 16px">
+          <button
+            id="clear-token"
+            class="secondary"
+            type="button"
+            aria-label="Hapus token tersimpan"
+          >
+            <i class="fas fa-trash" aria-hidden="true"></i> Hapus Token
+          </button>
+          <a class="button-link" href="/search" aria-label="Menuju dashboard"
+            ><i class="fas fa-compass" aria-hidden="true"></i> Dashboard</a
+          >
+        </div>
+      </section>
+    </main>
 
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script type="module">
-  import { fetchJSON, setToken, getToken, clearToken, statusSuccess, statusError, statusInfo } from './common.js';
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script type="module">
+      import {
+        fetchJSON,
+        setToken,
+        getToken,
+        clearToken,
+        statusSuccess,
+        statusError,
+        statusInfo,
+      } from './common.js'
 
-  const form = document.getElementById('login-form');
-  const statusEl = document.getElementById('login-status');
-  const tokenView = document.getElementById('token-view');
-  const googleStatus = document.getElementById('google-status');
+      const form = document.getElementById('login-form')
+      const statusEl = document.getElementById('login-status')
+      const tokenView = document.getElementById('token-view')
+      const googleStatus = document.getElementById('google-status')
+      const tokenDisplay = document.getElementById('token-display')
+      const tokenIcon = document.getElementById('token-icon')
+      const togglePassword = document.getElementById('toggle-password')
+      const passwordInput = document.getElementById('password')
 
-  const refreshTokenView = () => {
-    const token = getToken();
-    if (token) {
-      statusSuccess(tokenView, 'Token tersedia dan siap dipakai di halaman lain.');
-    } else {
-      statusInfo(tokenView, 'Belum ada token tersimpan.');
-    }
-  };
+      // Toggle password visibility
+      togglePassword?.addEventListener('click', () => {
+        const type = passwordInput.type === 'password' ? 'text' : 'password'
+        passwordInput.type = type
+        togglePassword.innerHTML =
+          type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>'
+      })
 
-  refreshTokenView();
+      const refreshTokenView = () => {
+        const token = getToken()
+        if (token) {
+          statusSuccess(tokenView, '✓ Token aktif dan siap digunakan.')
+          tokenDisplay.classList.add('active')
+          tokenIcon.innerHTML = '<i class="fas fa-unlock"></i>'
+        } else {
+          statusInfo(tokenView, 'Belum ada token tersimpan.')
+          tokenDisplay.classList.remove('active')
+          tokenIcon.innerHTML = '<i class="fas fa-lock"></i>'
+        }
+      }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    statusInfo(statusEl, 'Mengirim permintaan...');
-    const payload = Object.fromEntries(new FormData(form).entries());
-    try {
-      const data = await fetchJSON('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      setToken(data.token?.token || data.token);
-      statusSuccess(statusEl, 'Login berhasil! Token disimpan.');
-      refreshTokenView();
-    } catch (err) {
-      statusError(statusEl, err.message);
-    }
-  });
+      refreshTokenView()
 
-  document.getElementById('clear-token').addEventListener('click', () => {
-    clearToken();
-    refreshTokenView();
-    statusInfo(statusEl, 'Token dihapus.');
-  });
-
-  const googleClientId = document.querySelector('meta[name="google-client-id"]')?.content?.trim();
-
-  const initGoogleSignIn = () => {
-    if (!googleClientId) {
-      statusError(googleStatus, 'GOOGLE_CLIENT_ID belum diisi di meta tag.');
-      return;
-    }
-    if (!window.google?.accounts?.id) {
-      statusInfo(googleStatus, 'Memuat Google Identity...');
-      return;
-    }
-
-    // ⭐ GSI setup yang BENAR
-    window.google.accounts.id.initialize({
-      client_id: googleClientId,
-      callback: async (credentialResponse) => {
-        statusInfo(googleStatus, 'Memverifikasi akun Google...');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        statusInfo(statusEl, '<i class="fas fa-spinner fa-spin"></i> Memproses login...')
+        const payload = Object.fromEntries(new FormData(form).entries())
         try {
-          const data = await fetchJSON('/api/auth/google', {
+          const data = await fetchJSON('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: credentialResponse.credential }),
-          });
-          setToken(data.token?.token || data.token);
-          statusSuccess(googleStatus, 'Login Google berhasil! Token disimpan.');
-          refreshTokenView();
+            body: JSON.stringify(payload),
+          })
+          setToken(data.token?.token || data.token)
+          statusSuccess(statusEl, '✓ Login berhasil! Token tersimpan.')
+          refreshTokenView()
         } catch (err) {
-          statusError(googleStatus, err.message);
+          statusError(statusEl, '✕ ' + err.message)
         }
-      },
+      })
 
-      // ⭐ Tambahan penting agar GSI tidak fallback ke OAuth redirect
-      ux_mode: "popup",        // WAJIB untuk mencegah error Authorization
-      auto_select: false,      // Jangan pilih akun otomatis
-      cancel_on_tap_outside: false
-    });
+      document.getElementById('clear-token').addEventListener('click', () => {
+        clearToken()
+        refreshTokenView()
+        statusInfo(statusEl, 'Token dihapus.')
+      })
 
-    // Tampilkan tombol Google
-    window.google.accounts.id.renderButton(
-      document.getElementById('google-button'),
-      {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        shape: 'pill',
-        text: 'continue_with',
+      const googleClientId = document
+        .querySelector('meta[name="google-client-id"]')
+        ?.content?.trim()
+
+      const initGoogleSignIn = () => {
+        if (!googleClientId) {
+          statusError(googleStatus, 'GOOGLE_CLIENT_ID belum diisi di meta tag.')
+          return
+        }
+        if (!window.google?.accounts?.id) {
+          statusInfo(
+            googleStatus,
+            '<i class="fas fa-spinner fa-spin"></i> Memuat Google Identity...'
+          )
+          return
+        }
+
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (credentialResponse) => {
+            statusInfo(
+              googleStatus,
+              '<i class="fas fa-spinner fa-spin"></i> Memverifikasi akun Google...'
+            )
+            try {
+              const data = await fetchJSON('/api/auth/google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: credentialResponse.credential }),
+              })
+              setToken(data.token?.token || data.token)
+              statusSuccess(googleStatus, '✓ Login Google berhasil!')
+              refreshTokenView()
+            } catch (err) {
+              statusError(googleStatus, '✕ ' + err.message)
+            }
+          },
+          ux_mode: 'popup',
+          auto_select: false,
+          cancel_on_tap_outside: false,
+        })
+
+        window.google.accounts.id.renderButton(document.getElementById('google-button'), {
+          type: 'standard',
+          theme: 'filled_black',
+          size: 'large',
+          shape: 'pill',
+          text: 'continue_with',
+          width: '100%',
+        })
       }
-    );
-  };
 
-  window.addEventListener('load', () => {
-    initGoogleSignIn();
-
-    // Retry 8 detik bila script GSI belum siap
-    const interval = setInterval(() => {
-      if (window.google?.accounts?.id) {
-        initGoogleSignIn();
-        clearInterval(interval);
-      }
-    }, 800);
-    setTimeout(() => clearInterval(interval), 8000);
-  });
-</script>
-</body>
+      window.addEventListener('load', () => {
+        initGoogleSignIn()
+        const interval = setInterval(() => {
+          if (window.google?.accounts?.id) {
+            initGoogleSignIn()
+            clearInterval(interval)
+          }
+        }, 800)
+        setTimeout(() => clearInterval(interval), 8000)
+      })
+    </script>
+  </body>
 </html>

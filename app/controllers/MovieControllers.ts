@@ -14,12 +14,12 @@ const TMDB_BASE_URL = env.get('TMDB_BASE_URL') || 'https://api.themoviedb.org/3'
  */
 async function fetchTmdbDetails(tmdbId: number) {
   if (!TMDB_API_KEY) return null
-  
+
   try {
     const url = `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}`
     const response = await axios.get(url)
     const data = response.data
-    
+
     return {
       tmdbId: data.id,
       posterUrl: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
@@ -40,7 +40,7 @@ async function fetchTmdbDetails(tmdbId: number) {
  */
 async function searchTmdbMovies(query: string) {
   if (!TMDB_API_KEY) return []
-  
+
   try {
     const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=en-US&page=1`
     const response = await axios.get(url)
@@ -76,10 +76,7 @@ export default class MoviesController {
       .skip(skip)
       .limit(limit)
 
-    const [localItems, total] = await Promise.all([
-      cursor.exec(),
-      Movie.countDocuments(filter),
-    ])
+    const [localItems, total] = await Promise.all([cursor.exec(), Movie.countDocuments(filter)])
 
     let tmdbResults = []
 
@@ -118,7 +115,7 @@ export default class MoviesController {
   }
 
   async store({ request, response }: HttpContext) {
-    const body = request.only(['title','year','genre','synopsis','rating'])
+    const body = request.only(['title', 'year', 'genre', 'synopsis', 'rating'])
     if (!body.title) return response.badRequest({ error: 'title wajib' })
     if (body.rating && (body.rating < 0 || body.rating > 10)) {
       return response.badRequest({ error: 'rating 0–10' })
@@ -130,29 +127,28 @@ export default class MoviesController {
   }
 
   async update({ params, request, response }: HttpContext) {
-    const body = request.only(['title','year','genre','synopsis','rating'])
+    const body = request.only(['title', 'year', 'genre', 'synopsis', 'rating'])
     // @ts-ignore
     const user = request['user']
     // Tambahkan filter kepemilikan agar user hanya bisa update film miliknya
-    const movie = await Movie.findOneAndUpdate(
-      { _id: params.id, createdBy: user._id },
-      body, 
-      { new: true }
-    )
+    const movie = await Movie.findOneAndUpdate({ _id: params.id, createdBy: user._id }, body, {
+      new: true,
+    })
     if (!movie) return response.notFound({ error: 'Movie not found or unauthorized' })
     return movie
   }
-  
-  async destroy({ params, response }: HttpContext) {
+
+  async destroy({ params, response, request }: HttpContext) {
     // @ts-ignore␊
     const user = request['user']
+    console.log(`User ID: ${user._id}, Movie ID: ${params.id}`)
     // Tambahkan filter kepemilikan agar user hanya bisa hapus film miliknya␊
     const result = await Movie.deleteOne({ _id: params.id, createdBy: user._id })
-    
+
     if (result.deletedCount === 0) {
       return response.notFound({ error: 'Movie not found or unauthorized' })
     }
-    return response.noContent()
+    return response.ok({ message: 'film berhasil dihapus' })
   }
 
   async tmdbTrending({}: HttpContext) {
